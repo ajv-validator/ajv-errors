@@ -1,0 +1,26 @@
+{
+  "name": "ajv-errors",
+  "version": "0.0.1",
+  "description": "Custom error messages in JSON-Schema for Ajv validator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/epoberezkin/ajv-errors.git"
+  },
+  "keywords": [
+    "ajv",
+    "json-schema",
+    "validator",
+    "error",
+    "messages"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/epoberezkin/ajv-errors/issues"
+  },
+  "homepage": "https://github.com/epoberezkin/ajv-errors#readme"
+}
