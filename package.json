@@ -4,7 +4,10 @@
   "description": "Custom error messages in JSON-Schema for Ajv validator",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "eslint": "eslint *.js spec",
+    "test-spec": "mocha spec/*.spec.js -R spec",
+    "test-cov": "nyc npm run test-spec",
+    "test": "npm run eslint && npm run test-cov"
   },
   "repository": {
     "type": "git",
@@ -22,5 +25,25 @@
   "bugs": {
     "url": "https://github.com/epoberezkin/ajv-errors/issues"
   },
-  "homepage": "https://github.com/epoberezkin/ajv-errors#readme"
+  "homepage": "https://github.com/epoberezkin/ajv-errors#readme",
+  "peerDependencies": {
+    "ajv": ">=5.0.3-beta.0"
+  },
+  "devDependencies": {
+    "ajv": "^5.0.3-beta.0",
+    "eslint": "^3.17.0",
+    "mocha": "^3.2.0",
+    "nyc": "^10.1.2",
+    "pre-commit": "^1.2.2"
+  },
+  "nyc": {
+    "exclude": [
+      "**/spec/**",
+      "node_modules"
+    ],
+    "reporter": [
+      "lcov",
+      "text-summary"
+    ]
+  }
 }
