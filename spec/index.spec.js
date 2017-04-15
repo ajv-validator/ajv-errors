@@ -1,6 +1,6 @@
 'use strict';
 
-var ajvErrors = require('..');
+var ajvErrors = require('../index');
 var Ajv = require('ajv');
 var assert = require('assert');
 

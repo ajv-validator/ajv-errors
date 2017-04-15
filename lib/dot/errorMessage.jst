@@ -1,0 +1,53 @@
+{{# def.definitions }}
+{{# def.errors }}
+{{# def.setupKeyword }}
+
+{{? it.createErrors !== false }}
+  if (errors > 0) {
+    {{
+      var $rule = this
+        , $dataPath = 'errorMessage_dataPath' + $lvl
+        , $i = 'errorMessage_i' + $lvl
+        , $err = 'errorMessage_err' + $lvl
+        , $errors = 'errorMessage_errors' + $lvl
+        , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
+    }}
+    var {{=$dataPath}} = (dataPath || '') + {{= it.errorPath }};
+    {{? typeof $schema == 'string' }}
+      var {{=$i}} = 0;
+      var {{=$err}};
+      var {{=$errors}} = undefined;
+      while ({{=$i}}<errors) {
+        {{=$err}} = vErrors[{{=$i}}];
+        if ({{=$err}}.keyword != '{{=$keyword}}'
+            && {{=$err}}.dataPath == {{=$dataPath}}
+            && {{=$err}}.schemaPath.indexOf({{=$errSchemaPathString}}) == 0
+            && {{=$err}}.schemaPath[{{=it.errSchemaPath.length}}] == '/') {
+          if ({{=$errors}}) {{=$errors}}.push({{=$err}});
+          else {{=$errors}} = [{{=$err}}];
+          vErrors.splice({{=$i}}, 1);
+          errors--;
+        } else {
+          {{=$i}}++;
+        }
+      }
+      if ({{=$errors}}) {
+        var err =     {
+          keyword: '{{=$keyword}}'
+          , dataPath: {{=$dataPath}}
+          , schemaPath: {{=$errSchemaPathString}}
+          , params: { errors: {{=$errors}} }
+          {{? it.opts.messages !== false }}
+            , message: {{=it.util.toQuotedString($schema)}}
+          {{?}}
+          {{? it.opts.verbose }}
+            , schema: {{=it.util.toQuotedString($schema)}}
+            , parentSchema: validate.schema{{=it.schemaPath}}
+            , data: {{=$data}}
+          {{?}}
+        };
+        {{# def._addError:'custom' }}
+      }
+    {{?}}
+  }
+{{?}}

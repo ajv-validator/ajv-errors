@@ -4,6 +4,7 @@
   "description": "Custom error messages in JSON-Schema for Ajv validator",
   "main": "index.js",
   "scripts": {
+    "build": "node node_modules/ajv/scripts/compile-dots.js node_modules/ajv/lib lib",
     "eslint": "eslint *.js spec",
     "test-spec": "mocha spec/*.spec.js -R spec",
     "test-cov": "nyc npm run test-spec",
@@ -27,12 +28,15 @@
   },
   "homepage": "https://github.com/epoberezkin/ajv-errors#readme",
   "peerDependencies": {
-    "ajv": ">=5.0.3-beta.0"
+    "ajv": ">=5.0.4-beta.3"
   },
   "devDependencies": {
-    "ajv": "^5.0.3-beta.0",
+    "ajv": "^5.0.4-beta.3",
     "coveralls": "^2.11.16",
+    "dot": "^1.1.1",
     "eslint": "^3.17.0",
+    "glob": "^7.1.1",
+    "js-beautify": "^1.6.12",
     "mocha": "^3.2.0",
     "nyc": "^10.1.2",
     "pre-commit": "^1.2.2"
