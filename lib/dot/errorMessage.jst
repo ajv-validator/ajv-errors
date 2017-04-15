@@ -2,15 +2,29 @@
 {{# def.errors }}
 {{# def.setupKeyword }}
 
+{{## def.em_matchedError:
+  {{=$err}}.keyword != '{{=$keyword}}'
+  && ({{=$err}}.dataPath == {{=$dataPath}} ||
+    ({{=$err}}.dataPath.indexOf({{=$dataPath}}) == 0 &&
+     {{? it.opts.jsonPointers }}
+       {{=$err}}.dataPath[{{=$dataPath}}.length] == '/'
+     {{??}}
+       ({{=$nextChar}} = {{=$err}}.dataPath[{{=$dataPath}}.length]) == '.'
+        || {{=$nextChar}} == '['
+     {{?}}))
+  && {{=$err}}.schemaPath.indexOf({{=$errSchemaPathString}}) == 0
+  && {{=$err}}.schemaPath[{{=it.errSchemaPath.length}}] == '/'
+#}}
+
 {{? it.createErrors !== false }}
   if (errors > 0) {
     {{
       var $rule = this
-        , $dataPath = 'errorMessage_dataPath' + $lvl
-        , $i = 'errorMessage_i' + $lvl
-        , $err = 'errorMessage_err' + $lvl
-        , $errors = 'errorMessage_errors' + $lvl
-        , $nextChar = 'errorMessage_nextChar' + $lvl
+        , $dataPath = '_em_dataPath' + $lvl
+        , $i = '_em_i' + $lvl
+        , $err = '_em_err' + $lvl
+        , $errors = '_em_errors' + $lvl
+        , $nextChar = '_em_nextChar' + $lvl
         , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
     }}
     var {{=$dataPath}} = (dataPath || '') + {{= it.errorPath }};
@@ -20,17 +34,7 @@
       var {{=$errors}} = undefined;
       while ({{=$i}}<errors) {
         {{=$err}} = vErrors[{{=$i}}];
-        if ({{=$err}}.keyword != '{{=$keyword}}'
-            && ({{=$err}}.dataPath == {{=$dataPath}} ||
-              ({{=$err}}.dataPath.indexOf({{=$dataPath}}) == 0 &&
-               {{? it.opts.jsonPointers }}
-                 {{=$err}}.dataPath[{{=$dataPath}}.length] == '/'
-               {{??}}
-                 ({{=$nextChar}} = {{=$err}}.dataPath[{{=$dataPath}}.length]) == '.'
-                  || {{=$nextChar}} == '['
-               {{?}}))
-            && {{=$err}}.schemaPath.indexOf({{=$errSchemaPathString}}) == 0
-            && {{=$err}}.schemaPath[{{=it.errSchemaPath.length}}] == '/') {
+        if ({{# def.em_matchedError}}) {
           if ({{=$errors}}) {{=$errors}}.push({{=$err}});
           else {{=$errors}} = [{{=$err}}];
           vErrors.splice({{=$i}}, 1);
