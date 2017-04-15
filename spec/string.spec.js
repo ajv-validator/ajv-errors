@@ -14,7 +14,7 @@ describe('errorMessage value is a string', function() {
       type: 'object',
       required: ['foo'],
       properties: {
-        foo: true/*{ type: 'integer' }*/
+        foo: { type: 'integer' }
       },
       additionalProperties: false,
       errorMessage: 'should be an object with an integer property foo only'
@@ -25,8 +25,8 @@ describe('errorMessage value is a string', function() {
     testInvalid({}, ['required']);
     testInvalid({bar: 2}, ['required', 'additionalProperties']);
     testInvalid({foo: 1, bar: 2}, ['additionalProperties']);
-    // testInvalid({foo: 'a'}, ['type']);
-    // testInvalid({foo: 'a', bar: 2}, ['type', 'additionalProperties']);
+    testInvalid({foo: 'a'}, ['type']);
+    testInvalid({foo: 'a', bar: 2}, ['type', 'additionalProperties']);
     testInvalid(1, ['type']);
 
     function testInvalid(data, expectedReplacedKeywords) {

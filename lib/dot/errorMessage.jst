@@ -10,17 +10,25 @@
         , $i = 'errorMessage_i' + $lvl
         , $err = 'errorMessage_err' + $lvl
         , $errors = 'errorMessage_errors' + $lvl
+        , $nextChar = 'errorMessage_nextChar' + $lvl
         , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
     }}
     var {{=$dataPath}} = (dataPath || '') + {{= it.errorPath }};
     {{? typeof $schema == 'string' }}
       var {{=$i}} = 0;
-      var {{=$err}};
+      var {{=$err}}, {{=$nextChar}};
       var {{=$errors}} = undefined;
       while ({{=$i}}<errors) {
         {{=$err}} = vErrors[{{=$i}}];
         if ({{=$err}}.keyword != '{{=$keyword}}'
-            && {{=$err}}.dataPath == {{=$dataPath}}
+            && ({{=$err}}.dataPath == {{=$dataPath}} ||
+              ({{=$err}}.dataPath.indexOf({{=$dataPath}}) == 0 &&
+               {{? it.opts.jsonPointers }}
+                 {{=$err}}.dataPath[{{=$dataPath}}.length] == '/'
+               {{??}}
+                 ({{=$nextChar}} = {{=$err}}.dataPath[{{=$dataPath}}.length]) == '.'
+                  || {{=$nextChar}} == '['
+               {{?}}))
             && {{=$err}}.schemaPath.indexOf({{=$errSchemaPathString}}) == 0
             && {{=$err}}.schemaPath[{{=it.errSchemaPath.length}}] == '/') {
           if ({{=$errors}}) {{=$errors}}.push({{=$err}});
