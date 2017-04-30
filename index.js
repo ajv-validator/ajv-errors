@@ -8,8 +8,33 @@ module.exports = function (ajv) {
     statements: true,
     valid: true,
     errors: 'full',
+    config: {
+      CHILD_ERRORS: ['properties', 'items'],
+      ALLOW_OBJECT: ['required', 'dependencies']
+    },
     metaSchema: {
-      'type': 'string'
+      'type': ['string', 'object'],
+      properties: {
+        properties: {$ref: '#/definitions/stringMap'},
+        items: {$ref: '#/definitions/stringList'},
+        required: {$ref: '#/definitions/stringOrMap'},
+        dependencies: {$ref: '#/definitions/stringOrMap'}
+      },
+      additionalProperties: {'type': 'string'},
+      definitions: {
+        stringMap: {
+          'type': ['object'],
+          additionalProperties: {'type': 'string'}
+        },
+        stringOrMap: {
+          'type': ['string', 'object'],
+          additionalProperties: {'type': 'string'}
+        },
+        stringList: {
+          'type': ['array'],
+          items: {'type': 'string'}
+        }
+      }
     }
   });
   return ajv;

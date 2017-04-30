@@ -16,12 +16,20 @@
   && {{=$err}}.schemaPath[{{=it.errSchemaPath.length}}] == '/'
 #}}
 
+{{## def.em_matchedKeywordError:
+  {{=$err}}.keyword in {{=$errors}}
+  && {{=$err}}.dataPath == {{=$dataPath}}
+  && {{=$err}}.schemaPath.indexOf({{=$errSchemaPathString}}) == 0
+  && /^\/[^\/]*$/.test({{=$err}}.schemaPath.slice({{=$errSchemaPathString}}.length))
+#}}
+
+
 {{? it.createErrors !== false }}
   if (errors > 0) {
     {{
-      var $rule = this
-        , $dataPath = '_em_dataPath' + $lvl
+      var $dataPath = '_em_dataPath' + $lvl
         , $i = '_em_i' + $lvl
+        , $key = '_em_key' + $lvl
         , $err = '_em_err' + $lvl
         , $errors = '_em_errors' + $lvl
         , $nextChar = '_em_nextChar' + $lvl
@@ -30,28 +38,26 @@
     var {{=$dataPath}} = (dataPath || '') + {{= it.errorPath }};
     {{? typeof $schema == 'string' }}
       var {{=$i}} = 0;
-      var {{=$err}}, {{=$nextChar}};
-      var {{=$errors}} = undefined;
-      while ({{=$i}}<errors) {
+      var {{=$err}};
+      {{? !it.opts.jsonPointers }}var {{=$nextChar}};{{?}}
+      var {{=$errors}} = [];
+      while ({{=$i}} < errors) {
         {{=$err}} = vErrors[{{=$i}}];
         if ({{# def.em_matchedError}}) {
-          if ({{=$errors}}) {{=$errors}}.push({{=$err}});
-          else {{=$errors}} = [{{=$err}}];
+          {{=$errors}}.push({{=$err}});
           vErrors.splice({{=$i}}, 1);
           errors--;
         } else {
           {{=$i}}++;
         }
       }
-      if ({{=$errors}}) {
-        var err =     {
+      if ({{=$errors}}.length) {
+        var err = {
           keyword: '{{=$keyword}}'
           , dataPath: {{=$dataPath}}
           , schemaPath: {{=$errSchemaPathString}}
           , params: { errors: {{=$errors}} }
-          {{? it.opts.messages !== false }}
-            , message: {{=it.util.toQuotedString($schema)}}
-          {{?}}
+          , message: {{=it.util.toQuotedString($schema)}}
           {{? it.opts.verbose }}
             , schema: {{=it.util.toQuotedString($schema)}}
             , parentSchema: validate.schema{{=it.schemaPath}}
@@ -60,6 +66,50 @@
         };
         {{# def._addError:'custom' }}
       }
+    {{??}}
+      {{
+        var $config = it.self.getKeyword($keyword).config
+          , $keywordErrors = {}
+          , $childErrors = {};
+
+        for (var $key in $schema) {
+          var $child = $config.CHILD_ERRORS.indexOf($key) >= 0;
+          ($child ? $childErrors : $keywordErrors)[$key] = [];
+        }
+      }}
+      {{? Object.keys($keywordErrors).length }}
+        var {{=$i}} = 0;
+        var {{=$err}};
+        {{? !it.opts.jsonPointers }}var {{=$nextChar}};{{?}}
+        var {{=$errors}} = {{= JSON.stringify($keywordErrors) }};
+        while ({{=$i}} < errors) {
+          {{=$err}} = vErrors[{{=$i}}];
+          if ({{# def.em_matchedKeywordError}}) {
+            {{=$errors}}[{{=$err}}.keyword].push({{=$err}});
+            vErrors.splice({{=$i}}, 1);
+            errors--;
+          } else {
+            {{=$i}}++;
+          }
+        }
+        for (var {{=$key}} in {{=$errors}}) {
+          if ({{=$errors}}[{{=$key}}].length) {
+            var err = {
+              keyword: '{{=$keyword}}'
+              , dataPath: {{=$dataPath}}
+              , schemaPath: {{=$errSchemaPathString}}
+              , params: { errors: {{=$errors}}[{{=$key}}] }
+              , message: validate.schema{{=$schemaPath}}[{{=$key}}]
+              {{? it.opts.verbose }}
+                , schema: validate.schema{{=$schemaPath}}
+                , parentSchema: validate.schema{{=it.schemaPath}}
+                , data: {{=$data}}
+              {{?}}
+            };
+            {{# def._addError:'custom' }}
+          }
+        }
+      {{?}}
     {{?}}
   }
 {{?}}

@@ -33,6 +33,8 @@ describe('errorMessage value is a string', function() {
       assert.strictEqual(validate(data), false);
       assert.strictEqual(validate.errors.length, 1);
       var err = validate.errors[0];
+      assert.strictEqual(err.keyword, 'errorMessage');
+      assert.strictEqual(err.message, schema.errorMessage);
       assert.strictEqual(err.dataPath, '');
       assert.strictEqual(err.schemaPath, '#');
       var replacedKeywords = err.params.errors.map(function (e) {
