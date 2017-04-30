@@ -36,7 +36,7 @@ describe('errorMessage value is a string', function() {
       assert.strictEqual(err.keyword, 'errorMessage');
       assert.strictEqual(err.message, schema.errorMessage);
       assert.strictEqual(err.dataPath, '');
-      assert.strictEqual(err.schemaPath, '#');
+      assert.strictEqual(err.schemaPath, '#/errorMessage');
       var replacedKeywords = err.params.errors.map(function (e) {
         return e.keyword;
       });

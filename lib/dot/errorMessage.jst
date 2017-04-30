@@ -55,7 +55,7 @@
         var err = {
           keyword: '{{=$keyword}}'
           , dataPath: {{=$dataPath}}
-          , schemaPath: {{=$errSchemaPathString}}
+          , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
           , params: { errors: {{=$errors}} }
           , message: {{=it.util.toQuotedString($schema)}}
           {{? it.opts.verbose }}
@@ -97,7 +97,7 @@
             var err = {
               keyword: '{{=$keyword}}'
               , dataPath: {{=$dataPath}}
-              , schemaPath: {{=$errSchemaPathString}}
+              , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
               , params: { errors: {{=$errors}}[{{=$key}}] }
               , message: validate.schema{{=$schemaPath}}[{{=$key}}]
               {{? it.opts.verbose }}
