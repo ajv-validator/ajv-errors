@@ -3,12 +3,16 @@
   "version": "0.1.1",
   "description": "Custom error messages in JSON-Schema for Ajv validator",
   "main": "index.js",
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "build": "node node_modules/ajv/scripts/compile-dots.js node_modules/ajv/lib lib",
     "eslint": "eslint *.js spec",
     "test-spec": "mocha spec/*.spec.js -R spec",
     "test-cov": "nyc npm run test-spec",
-    "test": "npm run eslint && npm run build && npm run test-cov"
+    "test": "npm run eslint && npm run build && npm run test-cov",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
