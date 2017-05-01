@@ -20,11 +20,12 @@ Add the keyword `errorMessages` to Ajv instance:
 
 ```javascript
 var Ajv = require('ajv');
-var ajv = new Ajv({allErrors: true}); // option allErrors is required
+var ajv = new Ajv({allErrors: true, jsonPointers: true});
+// options allErrors and jsonPointers are required
 require('ajv-errors')(ajv);
 ```
 
-#### Replace all errors in the current schema and subschemas with a single message:
+### Replace all errors in the current schema and subschemas with a single message:
 
 ```javascript
 var schema = {
@@ -60,7 +61,7 @@ Processed errors:
 ]
 ```
 
-#### Replace errors for certain keywords in the current schema only:
+### Replace errors for certain keywords in the current schema only:
 
 ```javascript
 var schema = {
@@ -89,7 +90,7 @@ Processed errors:
   {
     // original error
     keyword: type,
-    dataPath: '.foo',
+    dataPath: '/foo',
     // ...
     message: 'should be integer'
   },
@@ -101,6 +102,62 @@ Processed errors:
     params: {
       errors: [
         { keyword: 'additionalProperties' /* , ... */ }
+      ]
+    },
+  }
+]
+```
+
+
+### Replace errors for properties / items (and deeper):
+
+```javascript
+var schema = {
+  type: 'object',
+  required: ['foo', 'bar'],
+  allOf: [{
+    properties: {
+      foo: { type: 'integer', minimum: 2 },
+      bar: { type: 'string', minLength: 2 }
+    },
+    additionalProperties: false
+  }],
+  errorMessage: {
+    properties: {
+      foo: 'data.foo should be integer >= 2',
+      bar: 'data.bar should be string with length >= 2'
+    }
+  }
+};
+
+var validate = ajv.compile(schema);
+console.log(validate({foo: 1, bar: 'a'})); // false
+console.log(validate.errors); // processed errors
+```
+
+Processed errors:
+
+```javascript
+[
+  {
+    keyword: 'errorMessage',
+    message: 'data.foo should be integer >= 2',
+    dataPath: '/foo',
+    // ...
+    params: {
+      errors: [
+        { keyword: 'minimum' /* , ... */ }
+      ]
+    },
+  },
+  {
+    keyword: 'errorMessage',
+    message: 'data.bar should be string with length >= 2',
+    dataPath: '/bar',
+    // ...
+    params: {
+      errors: [
+        { keyword: 'minLength' /* , ... */ }
       ]
     },
   }
