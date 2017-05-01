@@ -7,7 +7,7 @@ var assert = require('assert');
 
 describe('ajv-errors', function() {
   it('should return ajv instance', function() {
-    var ajv = new Ajv({allErrors: true});
+    var ajv = new Ajv({allErrors: true, jsonPointers: true});
     var _ajv = ajvErrors(ajv);
     assert.equal(_ajv, ajv);
   });
@@ -17,5 +17,12 @@ describe('ajv-errors', function() {
     assert.throws(function() {
       ajvErrors(ajv);
     });
+  });
+
+  it('should set option jsonPointers if not set', function() {
+    var ajv = new Ajv({allErrors: true});
+    assert.strictEqual(ajv._opts.jsonPointers, undefined);
+    ajvErrors(ajv);
+    assert.strictEqual(ajv._opts.jsonPointers, true);
   });
 });

@@ -1,7 +1,11 @@
 'use strict';
 
 module.exports = function (ajv) {
-  if (!ajv._opts.allErrors) throw new Error('Ajv option allErrors must be true');
+  if (!ajv._opts.allErrors) throw new Error('ajv-errors: Ajv option allErrors must be true');
+  if (!ajv._opts.jsonPointers) {
+    console.warn('ajv-errors: Ajv option jsonPointers changed to true');
+    ajv._opts.jsonPointers = true;
+  }
 
   ajv.addKeyword('errorMessage', {
     inline: require('./lib/dotjs/errorMessage'),
@@ -9,7 +13,6 @@ module.exports = function (ajv) {
     valid: true,
     errors: 'full',
     config: {
-      CHILD_ERRORS: ['properties', 'items'],
       ALLOW_OBJECT: ['required', 'dependencies']
     },
     metaSchema: {
