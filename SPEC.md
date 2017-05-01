@@ -73,7 +73,7 @@ console.log(ajv.errors);
 - object - keys are considered keywords.
   - if the value is a string, process all keyword-specific errors at the current schema & data level // DONE
   - if the value is an object, keys are considered property names (or property patterns in case of "patternProperties" keyword). This syntax can be used with keywords having multiple subschemas one for each property and with required keyword as well. In this case process all keyword-specific errors at the current schema & data level for a given property (or property matching pattern. Note, that patterns here MUST be the same as patterns used in "patternProperties" keyword). // DONE for "properties" and "items", patternProperties - TODO?
-  - if the value is an array, each item is considered an error message for a subschema at the same index. This syntax can be used with keywords that have arrays as their values, including "required". // TODO
+  - if the value is an array, each item is considered an error message for a subschema at the same index. This syntax can be used with keywords that have arrays as their values, including "required". // DONE for items, required should be an object
 
 Limitation - it is not possible to define error messages for $ref keyword.
 
@@ -93,10 +93,10 @@ Example:
 
 All errors that "errorMessage" keyword processes determined by keyword value, as described above.
 
-Each appearance of "errorMessage" keyword can generate either multiple or a single error message, depending on the option "multiple" (true/false, default is false?).  // DONE only multiple errors, probably single not needed?
+Each appearance of "errorMessage" keyword can generate either multiple or a single error message, depending on the option "multiple" (true/false, default is false?).  // DONE only multiple errors, TODO: single error
 
-If a single message is generated, option "separator" (a string, default is ', ' - same as in errorsText method) defines how to join multiple messages into a single string. // TODO?
+If a single message is generated, option "separator" (a string, default is ', ' - same as in errorsText method) defines how to join multiple messages into a single string. // TODO
 
 Option "prefix" can be used to prepend error message with "property" name or "dataPath"? // TODO?
 
-Option "mode" determines whether the errors are replaced by "errorMessage" errors or they are kept ("replace"/"append", default is "replace"). // DONE replace, append - TODO?
+Option "mode" determines whether the errors are replaced by "errorMessage" errors or they are kept ("replace"/"append", default is "replace"). // DONE replace, append - TODO
