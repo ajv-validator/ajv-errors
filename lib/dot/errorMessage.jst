@@ -37,6 +37,7 @@
         , $err = '_em_err' + $lvl
         , $child = '_em_child' + $lvl
         , $matches = '_em_matches' + $lvl
+        , $isArray = '_em_isArray' + $lvl
         , $errors = '_em_errors' + $lvl
         , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
     }}
@@ -132,17 +133,18 @@
       {{?}}
 
       {{? $hasProperties || $hasItems }}
+        var {{=$isArray}} = Array.isArray({{=$data}});
         if ({{? $hasProperties && $hasItems }}
               typeof {{=$data}} == 'object'
             {{?? $hasProperties}}
-              typeof {{=$data}} == 'object' && !Array.isArray({{=$data}})
+              typeof {{=$data}} == 'object' && !{{=$isArray}}
             {{??}}
-              Array.isArray({{=$data}})
+              {{=$isArray}}
             {{?}})
         {
           {{=$i}} = 0;
           {{=$errors}} = {{? $hasProperties && $hasItems }}
-                            Array.isArray({{=$data}})
+                            {{=$isArray}}
                             ? {{= JSON.stringify($childErrors.items) }}
                             : {{= JSON.stringify($childErrors.properties) }}
                          {{?? $hasProperties }}
@@ -170,7 +172,7 @@
                 , params: { errors: {{=$errors}}[{{=$key}}] }
                 , message: validate.schema{{=$schemaPath}}
                             {{? $hasProperties && $hasItems }}
-                              [Array.isArray({{=$data}})
+                              [{{=$isArray}}
                                ? 'items'
                                : 'properties']
                             {{?? $hasProperties }}
