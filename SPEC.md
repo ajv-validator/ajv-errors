@@ -72,7 +72,7 @@ console.log(ajv.errors);
 - string - process all errors at the current schema & data level or deeper. // DONE
 - object - keys are considered keywords.
   - if the value is a string, process all keyword-specific errors at the current schema & data level // DONE
-  - if the value is an object, keys are considered property names (or property patterns in case of "patternProperties" keyword). This syntax can be used with keywords having multiple subschemas one for each property and with required keyword as well. In this case process all keyword-specific errors at the current schema & data level for a given property (or property matching pattern. Note, that patterns here MUST be the same as patterns used in "patternProperties" keyword). // TODO
+  - if the value is an object, keys are considered property names (or property patterns in case of "patternProperties" keyword). This syntax can be used with keywords having multiple subschemas one for each property and with required keyword as well. In this case process all keyword-specific errors at the current schema & data level for a given property (or property matching pattern. Note, that patterns here MUST be the same as patterns used in "patternProperties" keyword). // DONE for "properties" and "items", patternProperties - TODO?
   - if the value is an array, each item is considered an error message for a subschema at the same index. This syntax can be used with keywords that have arrays as their values, including "required". // TODO
 
 Limitation - it is not possible to define error messages for $ref keyword.
@@ -99,4 +99,4 @@ If a single message is generated, option "separator" (a string, default is ', ' 
 
 Option "prefix" can be used to prepend error message with "property" name or "dataPath"? // TODO?
 
-Option "mode" determines whether the errors are replaced by "errorMessage" errors or they are kept ("replace"/"append", default is "append"?). // TODO? only replace is done currently
+Option "mode" determines whether the errors are replaced by "errorMessage" errors or they are kept ("replace"/"append", default is "replace"). // DONE replace, append - TODO?
