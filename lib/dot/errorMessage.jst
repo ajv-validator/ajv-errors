@@ -29,18 +29,23 @@
 
 
 {{? it.createErrors !== false }}
+  {{
+    var INTERPOLATION = /\$\{([^\}]+)\}/g;
+    var EMPTY_STR = /^\'\'\s*\+\s*|\s*\+\s*\'\'$/g;
+
+    var $config = it.self.getKeyword($keyword).config
+      , $dataPath = '_em_dataPath' + $lvl
+      , $i = '_em_i' + $lvl
+      , $key = '_em_key' + $lvl
+      , $err = '_em_err' + $lvl
+      , $child = '_em_child' + $lvl
+      , $matches = '_em_matches' + $lvl
+      , $isArray = '_em_isArray' + $lvl
+      , $errors = '_em_errors' + $lvl
+      , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
+  }}
+
   if (errors > 0) {
-    {{
-      var $dataPath = '_em_dataPath' + $lvl
-        , $i = '_em_i' + $lvl
-        , $key = '_em_key' + $lvl
-        , $err = '_em_err' + $lvl
-        , $child = '_em_child' + $lvl
-        , $matches = '_em_matches' + $lvl
-        , $isArray = '_em_isArray' + $lvl
-        , $errors = '_em_errors' + $lvl
-        , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
-    }}
     var {{=$dataPath}} = (dataPath || '') + {{= it.errorPath }};
     var {{=$i}}, {{=$err}}, {{=$errors}};
 
@@ -64,7 +69,7 @@
           , dataPath: {{=$dataPath}}
           , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
           , params: { errors: {{=$errors}} }
-          , message: {{=it.util.toQuotedString($schema)}}
+          , message: {{=templateExpr($schema)}}
           {{? it.opts.verbose }}
             , schema: {{=it.util.toQuotedString($schema)}}
             , parentSchema: validate.schema{{=it.schemaPath}}
@@ -75,8 +80,7 @@
       }
     {{??}}
       {{
-        var $config = it.self.getKeyword($keyword).config
-          , $keywordErrors = {}
+        var $keywordErrors = {}
           , $childErrors = { properties: {}, items: {} }
           , $hasProperties, $hasItems;
 
@@ -195,3 +199,15 @@
     {{?}}
   }
 {{?}}
+
+
+{{
+  function templateExpr(str) {
+    str = it.util.escapeQuotes(str);
+    if (!INTERPOLATION.test(str)) return "'" + str + "'";
+    var expr = "'" + str.replace(INTERPOLATION, function ($0, $1) {
+      return "' + JSON.stringify(" + it.util.getData($1, $dataLvl, it.dataPathArr) + ") + '";
+    }) + "'";
+    return expr.replace(EMPTY_STR, '');
+  }
+}}
