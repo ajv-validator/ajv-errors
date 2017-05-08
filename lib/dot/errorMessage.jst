@@ -27,6 +27,23 @@
   && {{=$child}} in {{=$errors}}
 #}}
 
+{{## def.compileTemplates: _keysArray:
+  var {{=$templates}} = {
+    {{ var $comma = false; }}
+    {{~ _keysArray:$k }}
+      {{? INTERPOLATION.test($schema[$k]) }}
+        {{?$comma}},{{?}}{{= it.util.toQuotedString($k) }}: {{= templateFunc($schema[$k]) }}
+        {{ $comma = true; }}
+      {{?}}
+    {{~}}
+  };
+#}}
+
+{{## def.compileChildTemplates: _children:
+  {{ var __keys = Object.keys($childErrors._children); }}
+  {{# def.compileTemplates:__keys }}
+#}}
+
 
 {{? it.createErrors !== false }}
   {{
@@ -39,6 +56,7 @@
       , $key = '_em_key' + $lvl
       , $err = '_em_err' + $lvl
       , $child = '_em_child' + $lvl
+      , $childKeyword = '_em_childKeyword' + $lvl
       , $matches = '_em_matches' + $lvl
       , $isArray = '_em_isArray' + $lvl
       , $errors = '_em_errors' + $lvl
@@ -109,15 +127,7 @@
       {{? $keywordErrorsArr.length }}
         {{=$i}} = 0;
         {{=$errors}} = {{= JSON.stringify($keywordErrors) }};
-        var {{=$templates}} = {
-          {{ var $comma = false; }}
-          {{~ $keywordErrorsArr:$k }}
-            {{? INTERPOLATION.test($schema[$k]) }}
-              {{?$comma}},{{?}}{{= it.util.toQuotedString($k) }}: {{= templateFunc($schema[$k]) }}
-              {{ $comma = true; }}
-            {{?}}
-          {{~}}
-        };
+        {{# def.compileTemplates:$keywordErrorsArr }}
         while ({{=$i}} < errors) {
           {{=$err}} = vErrors[{{=$i}}];
           if ({{# def.em_keywordErrorMatch}}) {
@@ -135,8 +145,8 @@
               , dataPath: {{=$dataPath}}
               , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
               , params: { errors: {{=$errors}}[{{=$key}}] }
-              , message: {{=$templates}}[{{=$key}}]
-                          ? {{=$templates}}[{{=$key}}]()
+              , message: {{=$key}} in {{=$templates}}
+                          ? {{=$templates}}[{{=$key}}] ()
                           : validate.schema{{=$schemaPath}}[{{=$key}}]
               {{? it.opts.verbose }}
                 , schema: validate.schema{{=$schemaPath}}
@@ -151,22 +161,32 @@
 
       {{? $hasProperties || $hasItems }}
         var {{=$isArray}} = Array.isArray({{=$data}});
-
         if
           {{? $hasProperties && $hasItems }}
             (typeof {{=$data}} == 'object') {
+              {{ var $childProp = '[' + $childKeyword + ']'; }}
               {{=$i}} = 0;
-              {{=$errors}} = {{=$isArray}}
-                              ? {{= JSON.stringify($childErrors.items) }}
-                              : {{= JSON.stringify($childErrors.properties) }};
+              if ({{=$isArray}}) {
+                var {{=$childKeyword}} = 'items';
+                {{=$errors}} = {{= JSON.stringify($childErrors.items) }}; 
+                {{# def.compileChildTemplates: items }}
+              } else {
+                var {{=$childKeyword}} = 'properties';
+                {{=$errors}} =  {{= JSON.stringify($childErrors.properties) }}; 
+                {{# def.compileChildTemplates: properties }}
+              }
           {{?? $hasProperties }}
             (typeof {{=$data}} == 'object' && !{{=$isArray}}) {
+              {{ var $childProp = '.properties'; }}
               {{=$i}} = 0;
               {{=$errors}} = {{= JSON.stringify($childErrors.properties) }};
+              {{# def.compileChildTemplates: properties }}
           {{??}}
             ({{=$isArray}}) {
+              {{ var $childProp = '.items'; }}
               {{=$i}} = 0;
               {{=$errors}} = {{= JSON.stringify($childErrors.items) }};
+              {{# def.compileChildTemplates: items }}
           {{?}}
 
           var {{=$child}}, {{=$matches}};
@@ -187,17 +207,9 @@
                 , dataPath: {{=$dataPath}} + '/' + {{=$key}}.replace(/~/g, '~0').replace(/\//g, '~1')
                 , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
                 , params: { errors: {{=$errors}}[{{=$key}}] }
-                , message: validate.schema{{=$schemaPath}}
-                            {{? $hasProperties && $hasItems }}
-                              [{{=$isArray}}
-                               ? 'items'
-                               : 'properties']
-                            {{?? $hasProperties }}
-                              .properties
-                            {{??}}
-                              .items
-                            {{?}}
-                            [{{=$key}}]
+                , message: {{=$key}} in {{=$templates}}
+                            ? {{=$templates}}[{{=$key}}] ()
+                            : validate.schema{{=$schemaPath}}{{=$childProp}}[{{=$key}}]
                 {{? it.opts.verbose }}
                   , schema: validate.schema{{=$schemaPath}}
                   , parentSchema: validate.schema{{=it.schemaPath}}
