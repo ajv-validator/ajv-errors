@@ -151,24 +151,24 @@
 
       {{? $hasProperties || $hasItems }}
         var {{=$isArray}} = Array.isArray({{=$data}});
-        if ({{? $hasProperties && $hasItems }}
-              typeof {{=$data}} == 'object'
-            {{?? $hasProperties}}
-              typeof {{=$data}} == 'object' && !{{=$isArray}}
-            {{??}}
-              {{=$isArray}}
-            {{?}})
-        {
-          {{=$i}} = 0;
-          {{=$errors}} = {{? $hasProperties && $hasItems }}
-                            {{=$isArray}}
-                            ? {{= JSON.stringify($childErrors.items) }}
-                            : {{= JSON.stringify($childErrors.properties) }}
-                         {{?? $hasProperties }}
-                            {{= JSON.stringify($childErrors.properties) }}
-                         {{??}}
-                            {{= JSON.stringify($childErrors.items) }}
-                         {{?}};
+
+        if
+          {{? $hasProperties && $hasItems }}
+            (typeof {{=$data}} == 'object') {
+              {{=$i}} = 0;
+              {{=$errors}} = {{=$isArray}}
+                              ? {{= JSON.stringify($childErrors.items) }}
+                              : {{= JSON.stringify($childErrors.properties) }};
+          {{?? $hasProperties }}
+            (typeof {{=$data}} == 'object' && !{{=$isArray}}) {
+              {{=$i}} = 0;
+              {{=$errors}} = {{= JSON.stringify($childErrors.properties) }};
+          {{??}}
+            ({{=$isArray}}) {
+              {{=$i}} = 0;
+              {{=$errors}} = {{= JSON.stringify($childErrors.items) }};
+          {{?}}
+
           var {{=$child}}, {{=$matches}};
           while ({{=$i}} < errors) {
             {{=$err}} = vErrors[{{=$i}}];
@@ -206,8 +206,8 @@
               };
               {{# def._addError:'custom' }}
             }
-          }
-        }
+          } /* for */
+        } /* if */
       {{?}}
     {{?}}
   }
