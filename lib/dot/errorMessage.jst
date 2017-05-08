@@ -42,6 +42,7 @@
       , $matches = '_em_matches' + $lvl
       , $isArray = '_em_isArray' + $lvl
       , $errors = '_em_errors' + $lvl
+      , $templates = '_em_templates' + $lvl
       , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
   }}
 
@@ -104,9 +105,19 @@
         }
       }}
 
-      {{? Object.keys($keywordErrors).length }}
+      {{ var $keywordErrorsArr = Object.keys($keywordErrors); }}
+      {{? $keywordErrorsArr.length }}
         {{=$i}} = 0;
         {{=$errors}} = {{= JSON.stringify($keywordErrors) }};
+        var {{=$templates}} = {
+          {{ var $comma = false; }}
+          {{~ $keywordErrorsArr:$k }}
+            {{? INTERPOLATION.test($schema[$k]) }}
+              {{?$comma}},{{?}}{{= it.util.toQuotedString($k) }}: {{= templateFunc($schema[$k]) }}
+              {{ $comma = true; }}
+            {{?}}
+          {{~}}
+        };
         while ({{=$i}} < errors) {
           {{=$err}} = vErrors[{{=$i}}];
           if ({{# def.em_keywordErrorMatch}}) {
@@ -124,7 +135,9 @@
               , dataPath: {{=$dataPath}}
               , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
               , params: { errors: {{=$errors}}[{{=$key}}] }
-              , message: validate.schema{{=$schemaPath}}[{{=$key}}]
+              , message: {{=$templates}}[{{=$key}}]
+                          ? {{=$templates}}[{{=$key}}]()
+                          : validate.schema{{=$schemaPath}}[{{=$key}}]
               {{? it.opts.verbose }}
                 , schema: validate.schema{{=$schemaPath}}
                 , parentSchema: validate.schema{{=it.schemaPath}}
@@ -209,5 +222,9 @@
       return "' + JSON.stringify(" + it.util.getData($1, $dataLvl, it.dataPathArr) + ") + '";
     }) + "'";
     return expr.replace(EMPTY_STR, '');
+  }
+
+  function templateFunc(str) {
+    return 'function() { return ' + templateExpr(str) + '; }';
   }
 }}
