@@ -10,10 +10,13 @@ describe('options', function() {
 
   beforeEach(function() {
     ajv = new Ajv({allErrors: true, jsonPointers: true});
-    ajvErrors(ajv, {keepErrors: true});
   });
 
-  describe('keepErrors: true', function() {
+  describe('keepErrors = true', function() {
+    beforeEach(function() {
+      ajvErrors(ajv, {keepErrors: true});
+    });
+
     describe('errorMessage is a string', function() {
       it('should keep matched errors and mark them with {emUsed: true} property', function() {
         var schema = {
@@ -135,6 +138,58 @@ describe('options', function() {
         ]);
       });
     });
+  });
+
+
+  describe('singleError', function() {
+    describe('= true', function() {
+      it('should generate a single error for all keywords', function() {
+        ajvErrors(ajv, {singleError: true});
+        testSingleErrors('; ');
+      });
+    });
+
+    describe('= separator', function() {
+      it('should generate a single error for all keywords using separator', function() {
+        ajvErrors(ajv, {singleError: '\n'});
+        testSingleErrors('\n');
+      });
+    });
+
+    function testSingleErrors(separator) {
+      var schema = {
+        type: 'number',
+        minimum: 2,
+        maximum: 10,
+        multipleOf: 2,
+        errorMessage: {
+          type: 'should be number',
+          minimum: 'should be >= 2',
+          maximum: 'should be <= 10',
+          multipleOf: 'should be multipleOf 2'
+        }
+      };
+
+      var validate = ajv.compile(schema);
+      assert.strictEqual(validate(4), true);
+      assert.strictEqual(validate(11), false);
+
+      var expectedKeywords = ['maximum', 'multipleOf'];
+      var expectedMessage = expectedKeywords
+                            .map(function (keyword) {
+                              return schema.errorMessage[keyword];
+                            })
+                            .join(separator);
+
+      assertErrors(validate, [
+        {
+          keyword: 'errorMessage',
+          message: expectedMessage,
+          dataPath: '',
+          errors: expectedKeywords
+        }
+      ]);
+    }
   });
 
 

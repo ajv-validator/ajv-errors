@@ -69,6 +69,12 @@
   };
 #}}
 
+{{## def.em_errorMessage:
+  {{=$key}} in {{=$templates}}
+  ? {{=$templates}}[{{=$key}}] ()
+  : validate.schema{{=$schemaPath}}[{{=$key}}]
+#}}
+
 
 {{? it.createErrors !== false }}
   {{
@@ -86,6 +92,8 @@
       , $matches = '_em_matches' + $lvl
       , $isArray = '_em_isArray' + $lvl
       , $errors = '_em_errors' + $lvl
+      , $message = '_em_message' + $lvl
+      , $paramsErrors = '_em_paramsErrors' + $lvl
       , $templates = '_em_templates' + $lvl
       , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
   }}
@@ -162,25 +170,50 @@
             {{=$i}}++;
           }
         }
-        for (var {{=$key}} in {{=$errors}}) {
-          if ({{=$errors}}[{{=$key}}].length) {
-            var err = {
-              keyword: '{{=$keyword}}'
-              , dataPath: {{=$dataPath}}
-              , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
-              , params: { errors: {{=$errors}}[{{=$key}}] }
-              , message: {{=$key}} in {{=$templates}}
-                          ? {{=$templates}}[{{=$key}}] ()
-                          : validate.schema{{=$schemaPath}}[{{=$key}}]
-              {{? it.opts.verbose }}
-                , schema: validate.schema{{=$schemaPath}}
-                , parentSchema: validate.schema{{=it.schemaPath}}
-                , data: {{=$data}}
-              {{?}}
-            };
-            {{# def._addError:'custom' }}
+
+        {{? $config.options.singleError }}
+          var {{=$message}} = '';
+          var {{=$paramsErrors}} = [];
+        {{?}}
+
+          for (var {{=$key}} in {{=$errors}}) {
+            if ({{=$errors}}[{{=$key}}].length) {
+
+        {{? $config.options.singleError }}
+              if ({{=$message}}) {
+                {{=$message}} += {{? typeof $config.options.singleError == 'string' }}
+                  {{= it.util.toQuotedString($config.options.singleError) }}
+                {{??}}
+                  '; '
+                {{?}};
+              }
+              {{=$message}} += {{# def.em_errorMessage }};
+              {{=$paramsErrors}} = {{=$paramsErrors}}.concat({{=$errors}}[{{=$key}}]);
+            }
           }
-        }
+        {{??}}
+              var {{=$message}} = {{# def.em_errorMessage }};
+              var {{=$paramsErrors}} = {{=$errors}}[{{=$key}}];
+        {{?}}
+
+              var err = {
+                keyword: '{{=$keyword}}'
+                , dataPath: {{=$dataPath}}
+                , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
+                , params: { errors: {{=$paramsErrors}} }
+                , message: {{=$message}}
+                {{? it.opts.verbose }}
+                  , schema: validate.schema{{=$schemaPath}}
+                  , parentSchema: validate.schema{{=it.schemaPath}}
+                  , data: {{=$data}}
+                {{?}}
+              };
+              {{# def._addError:'custom' }}
+
+        {{? !$config.options.singleError }}
+            }
+          }
+        {{?}}
       {{?}}
 
       {{? $hasProperties || $hasItems }}

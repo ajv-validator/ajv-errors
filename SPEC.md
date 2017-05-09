@@ -93,10 +93,8 @@ Example:
 
 All errors that "errorMessage" keyword processes determined by keyword value, as described above.
 
-Each appearance of "errorMessage" keyword can generate either multiple or a single error message, depending on the option "multiple" (true/false, default is false?).  // DONE only multiple errors, TODO: single error
+Each appearance of "errorMessage" keyword can generate either multiple or a single error message, depending on the option "multiple" (true/false, default is false?).  // DONE
 
-If a single message is generated, option "separator" (a string, default is ', ' - same as in errorsText method) defines how to join multiple messages into a single string. // TODO
+If a single message is generated, option "separator" (a string, default is ', ' - same as in errorsText method) defines how to join multiple messages into a single string. // DONE
 
-Option "prefix" can be used to prepend error message with "property" name or "dataPath"? // TODO?
-
-Option "mode" determines whether the errors are replaced by "errorMessage" errors or they are kept ("replace"/"append", default is "replace"). // DONE replace, append - TODO
+Option "mode" determines whether the errors are replaced by "errorMessage" errors or they are kept ("replace"/"append", default is "replace"). // DONE
