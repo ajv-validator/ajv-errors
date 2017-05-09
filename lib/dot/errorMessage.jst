@@ -3,7 +3,7 @@
 {{# def.setupKeyword }}
 
 {{## def.em_errorMatch:
-  {{=$err}}.keyword != '{{=$keyword}}'
+  {{# def._em_commonErrorMatch }}
   && ({{=$err}}.dataPath == {{=$dataPath}} ||
       ({{=$err}}.dataPath.indexOf({{=$dataPath}}) == 0 &&
        {{=$err}}.dataPath[{{=$dataPath}}.length] == '/'))
@@ -12,19 +12,36 @@
 #}}
 
 {{## def.em_keywordErrorMatch:
-  {{=$err}}.keyword in {{=$errors}}
+  {{# def._em_commonErrorMatch }}
+  && {{=$err}}.keyword in {{=$errors}}
   && {{=$err}}.dataPath == {{=$dataPath}}
   && {{=$err}}.schemaPath.indexOf({{=$errSchemaPathString}}) == 0
   && /^\/[^\/]*$/.test({{=$err}}.schemaPath.slice({{=it.errSchemaPath.length}}))
 #}}
 
 {{## def.em_childErrorMatch:
-  {{=$err}}.keyword != '{{=$keyword}}'
+  {{# def._em_commonErrorMatch }}
   && {{=$err}}.dataPath.indexOf({{=$dataPath}}) == 0
   && ({{=$matches}} = {{=$err}}.dataPath.slice({{=$dataPath}}.length).match(/^\/([^\/]*)(?:\/|$)/),
       {{=$child}} = {{=$matches}} && {{=$matches}}[1].replace(/~1/g, '/').replace(/~0/g, '~')
      ) !== undefined
   && {{=$child}} in {{=$errors}}
+#}}
+
+{{## def._em_commonErrorMatch:
+  {{=$err}}.keyword != '{{=$keyword}}'
+  {{? $config.options.keepErrors }}
+    && !{{=$err}}.emUsed
+  {{?}}
+#}}
+
+{{## def.em_useError:
+  {{? $config.options.keepErrors }}
+    {{=$err}}.emUsed = true;
+  {{??}}
+    vErrors.splice({{=$i}}, 1);
+    errors--;
+  {{?}}
 #}}
 
 {{## def.compileTemplates: _keysArray:
@@ -85,8 +102,7 @@
         {{=$err}} = vErrors[{{=$i}}];
         if ({{# def.em_errorMatch}}) {
           {{=$errors}}.push({{=$err}});
-          vErrors.splice({{=$i}}, 1);
-          errors--;
+          {{# def.em_useError }}
         } else {
           {{=$i}}++;
         }
@@ -141,8 +157,7 @@
           {{=$err}} = vErrors[{{=$i}}];
           if ({{# def.em_keywordErrorMatch}}) {
             {{=$errors}}[{{=$err}}.keyword].push({{=$err}});
-            vErrors.splice({{=$i}}, 1);
-            errors--;
+            {{# def.em_useError }}
           } else {
             {{=$i}}++;
           }
@@ -203,8 +218,7 @@
             {{=$err}} = vErrors[{{=$i}}];
             if ({{# def.em_childErrorMatch}}) {
               {{=$errors}}[{{=$child}}].push({{=$err}});
-              vErrors.splice({{=$i}}, 1);
-              errors--;
+              {{# def.em_useError }}
             } else {
               {{=$i}}++;
             }
