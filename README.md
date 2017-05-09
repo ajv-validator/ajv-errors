@@ -33,9 +33,11 @@ Add the keyword `errorMessages` to Ajv instance:
 ```javascript
 var Ajv = require('ajv');
 var ajv = new Ajv({allErrors: true, jsonPointers: true});
-// options allErrors and jsonPointers are required
-require('ajv-errors')(ajv);
+// Ajv options allErrors and jsonPointers are required
+require('ajv-errors')(ajv /*, {singleError: true} */);
 ```
+
+See [Options](#options) below.
 
 
 ### Single message
