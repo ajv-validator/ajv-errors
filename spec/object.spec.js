@@ -266,43 +266,49 @@ describe('errorMessage value is an object', function() {
       }
     });
 
-    it('should replace errors for properties and items with custom error messages', function() {
-      schema = {
-        definitions: {
-          foo: {
-            type: 'object',
-            required: ['baz'],
-            properties: {
-              baz: {type: 'integer', maximum: 2}
+    describe('both properties and items', function() {
+      beforeEach(function() {
+        schema = {
+          definitions: {
+            foo: {
+              type: 'object',
+              required: ['baz'],
+              properties: {
+                baz: {type: 'integer', maximum: 2}
+              }
+            },
+            bar: {
+              type: 'array',
+              items: {type: 'string', maxLength: 3},
+              minItems: 1
             }
           },
-          bar: {
-            type: 'array',
-            items: {type: 'string', maxLength: 3},
-            minItems: 1
-          }
-        },
-        anyOf: [
-          {
-            type: 'object',
-            required: ['foo', 'bar'],
-            properties: {
-              foo: {$ref: '#/definitions/foo'},
-              bar: {$ref: '#/definitions/bar'}
+          anyOf: [
+            {
+              type: 'object',
+              required: ['foo', 'bar'],
+              properties: {
+                foo: {$ref: '#/definitions/foo'},
+                bar: {$ref: '#/definitions/bar'}
+              },
+              additionalProperties: false
             },
-            additionalProperties: false
-          },
-          {
-            type: 'array',
-            items: [
-              {$ref: '#/definitions/foo'},
-              {$ref: '#/definitions/bar'}
-            ],
-            minItems: 2,
-            additionalItems: false
-          }
-        ],
-        errorMessage: {
+            {
+              type: 'array',
+              items: [
+                {$ref: '#/definitions/foo'},
+                {$ref: '#/definitions/bar'}
+              ],
+              minItems: 2,
+              additionalItems: false
+            }
+          ],
+          errorMessage: 'will be replaced in each test'
+        };
+      });
+
+      it('should replace errors for properties and items with custom error messages', function() {
+        schema.errorMessage = {
           properties: {
             foo: 'data.foo should be an object with the integer property "baz" <= 2',
             bar: 'data.bar should be an array with at least one string item with length <= 3'
@@ -311,42 +317,68 @@ describe('errorMessage value is an object', function() {
             'data[0] should be an object with the integer property "baz" <= 2',
             'data[1] should be an array with at least one string item with length <= 3'
           ]
-        }
-      };
+        };
 
-      var validData1 = {
-        foo: {baz: 1},
-        bar: ['abc']
-      };
-
-      var validData2 = [
-        {baz: 1},
-        ['abc']
-      ];
-
-      ajvs.forEach(function (ajv) {
-        validate = ajv.compile(schema);
-
-        assert.strictEqual(validate(validData1), true);
-        assert.strictEqual(validate(validData2), true);
-        testInvalid({},                 ['required', 'required', 'type', 'anyOf']);
-        testInvalid({foo: 1},           ['required', 'type', 'anyOf', ['type']]);
-        testInvalid({foo: 1, bar: 2},   ['type', 'anyOf', ['type'], ['type']]);
-        testInvalid({foo: {baz: 'a'}},  ['required', 'type', 'anyOf', ['type']]);
-        testInvalid({foo: {baz: 3}},    ['required', 'type', 'anyOf', ['maximum']]);
-        testInvalid({foo: {baz: 3}, bar: []},       ['type', 'anyOf', ['maximum'], ['minItems']]);
-        testInvalid({foo: {baz: 3}, bar: [1]},      ['type', 'anyOf', ['maximum'], ['type']]);
-        testInvalid({foo: {baz: 3}, bar: ['abcd']}, ['type', 'anyOf', ['maximum'], ['maxLength']]);
-
-        testInvalid([],            ['type', 'minItems', 'anyOf']);
-        testInvalid([1],           ['type', 'minItems', 'anyOf', ['type']]);
-        testInvalid([1, 2],        ['type', 'anyOf', ['type'], ['type']]);
-        testInvalid([{baz: 'a'}],  ['type', 'minItems', 'anyOf', ['type']]);
-        testInvalid([{baz: 3}],    ['type', 'minItems', 'anyOf', ['maximum']]);
-        testInvalid([{baz: 3}, []],       ['type', 'anyOf', ['maximum'], ['minItems']]);
-        testInvalid([{baz: 3}, [1]],      ['type', 'anyOf', ['maximum'], ['type']]);
-        testInvalid([{baz: 3}, ['abcd']], ['type', 'anyOf', ['maximum'], ['maxLength']]);
+        testPropsAndItems();
       });
+
+      it('should replace errors for properties and items with interpolated error messages', function() {
+        schema.errorMessage = {
+          properties: {
+            foo: 'data.foo should be an object with the integer property "baz" <= 2, "baz" is ${/foo/baz}',
+            bar: 'data.bar should be an array with at least one string item with length <= 3, "bar" is ${/bar}'
+          },
+          items: [
+            'data[0] should be an object with the integer property "baz" <= 2, data[0].baz is ${/0/baz}',
+            'data[1] should be an array with at least one string item with length <= 3, data[1] is ${/1}'
+          ]
+        };
+
+        testPropsAndItems(tmpl);
+
+        function tmpl(str, data) {
+          return str.replace('${/foo/baz}', JSON.stringify(data.foo && data.foo.baz))
+                    .replace('${/bar}', JSON.stringify(data.bar))
+                    .replace('${/0/baz}', JSON.stringify(data[0] && data[0].baz))
+                    .replace('${/1}', JSON.stringify(data[1]));
+        }
+      });
+
+      function testPropsAndItems(tmpl) {
+        var validData1 = {
+          foo: {baz: 1},
+          bar: ['abc']
+        };
+
+        var validData2 = [
+          {baz: 1},
+          ['abc']
+        ];
+
+        ajvs.forEach(function (ajv) {
+          validate = ajv.compile(schema);
+
+          assert.strictEqual(validate(validData1), true);
+          assert.strictEqual(validate(validData2), true);
+          testInvalid({},                 ['required', 'required', 'type', 'anyOf'], tmpl);
+          testInvalid({foo: 1},           ['required', 'type', 'anyOf', ['type']], tmpl);
+          testInvalid({foo: 1, bar: 2},   ['type', 'anyOf', ['type'], ['type']], tmpl);
+          testInvalid({foo: {baz: 'a'}},  ['required', 'type', 'anyOf', ['type']], tmpl);
+          testInvalid({foo: {baz: 3}},    ['required', 'type', 'anyOf', ['maximum']], tmpl);
+          testInvalid({foo: {baz: 3}, bar: []},       ['type', 'anyOf', ['maximum'], ['minItems']], tmpl);
+          testInvalid({foo: {baz: 3}, bar: [1]},      ['type', 'anyOf', ['maximum'], ['type']], tmpl);
+          testInvalid({foo: {baz: 3}, bar: ['abcd']}, ['type', 'anyOf', ['maximum'], ['maxLength']], tmpl);
+
+          testInvalid([],            ['type', 'minItems', 'anyOf'], tmpl);
+          testInvalid([1],           ['type', 'minItems', 'anyOf', ['type']], tmpl);
+          testInvalid([1, 2],        ['type', 'anyOf', ['type'], ['type']], tmpl);
+          testInvalid([{baz: 'a'}],  ['type', 'minItems', 'anyOf', ['type']], tmpl);
+          testInvalid([{baz: 3}],    ['type', 'minItems', 'anyOf', ['maximum']], tmpl);
+          testInvalid([{baz: 3}, []],       ['type', 'anyOf', ['maximum'], ['minItems']], tmpl);
+          testInvalid([{baz: 3}, [1]],      ['type', 'anyOf', ['maximum'], ['type']], tmpl);
+          testInvalid([{baz: 3}, ['abcd']], ['type', 'anyOf', ['maximum'], ['maxLength']], tmpl);
+        });
+      }
     });
 
 
