@@ -295,14 +295,71 @@ describe('errorMessage value is an object', function() {
       });
     });
 
-    function testInvalid(data, expectedErrors) {
+    it('should replace errors for properties with interpolated error messages', function() {
+      schema = {
+        type: 'object',
+        required: ['foo', 'bar'],
+        properties: {
+          foo: {
+            type: 'object',
+            required: ['baz'],
+            properties: {
+              baz: {type: 'integer', maximum: 2}
+            }
+          },
+          bar: {
+            type: 'array',
+            items: {type: 'string', maxLength: 3},
+            minItems: 1
+          }
+        },
+        additionalProperties: false,
+        errorMessage: {
+          properties: {
+            foo: 'data.foo should be an object with the integer property "baz" <= 2, "baz" is ${/foo/baz}',
+            bar: 'data.bar should be an array with at least one string item with length <= 3, "bar" is ${/bar}'
+          }
+        }
+      };
+
+      var validData = {
+        foo: {baz: 1},
+        bar: ['abc']
+      };
+
+      ajvs.forEach(function (ajv) {
+        validate = ajv.compile(schema);
+
+        assert.strictEqual(validate(validData), true);
+        testInvalid({},                 ['required', 'required'], tmpl);
+        testInvalid({foo: 1},           ['required', ['type']], tmpl);
+        testInvalid({foo: 1, bar: 2},   [['type'], ['type']], tmpl);
+        testInvalid({foo: {baz: 'a'}},  ['required', ['type']], tmpl);
+        testInvalid({foo: {baz: 3}},    ['required', ['maximum']], tmpl);
+        testInvalid({foo: {baz: 3}, bar: []},       [['maximum'], ['minItems']], tmpl);
+        testInvalid({foo: {baz: 3}, bar: [1]},      [['maximum'], ['type']], tmpl);
+        testInvalid({foo: {baz: 3}, bar: ['abcd']}, [['maximum'], ['maxLength']], tmpl);
+      });
+
+      function tmpl(str, data) {
+        return str.replace('${/foo/baz}', JSON.stringify(data.foo && data.foo.baz))
+                  .replace('${/bar}', JSON.stringify(data.bar));
+
+      }
+    });
+
+
+    function testInvalid(data, expectedErrors, interpolate) {
       assert.strictEqual(validate(data), false);
       assert.strictEqual(validate.errors.length, expectedErrors.length);
       validate.errors.forEach(function (err, i) {
         var expectedErr = expectedErrors[i];
         if (Array.isArray(expectedErr)) { // errorMessage error
           assert.strictEqual(err.keyword, 'errorMessage');
-          assert.strictEqual(err.message, schema.errorMessage[Array.isArray(data) ? 'items' : 'properties'][err.dataPath.slice(1)]);
+          var child = Array.isArray(data) ? 'items' : 'properties';
+          var expectedMessage = schema.errorMessage[child][err.dataPath.slice(1)];
+          if (interpolate) expectedMessage = interpolate(expectedMessage, data);
+          assert.strictEqual(err.message, expectedMessage);
           assert((Array.isArray(data) ? /^\/(0|1)$/ : /^\/(foo|bar)$/).test(err.dataPath));
           assert.strictEqual(err.schemaPath, '#/errorMessage');
           var replacedKeywords = err.params.errors.map(function (e) {

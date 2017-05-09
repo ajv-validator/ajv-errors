@@ -40,14 +40,23 @@
 #}}
 
 {{## def.compileChildTemplates: _children:
-  {{ var __keys = Object.keys($childErrors._children); }}
-  {{# def.compileTemplates:__keys }}
+  {{ var _keysArray = Object.keys($childErrors._children); }}
+  var {{=$templates}} = {
+    {{ var $comma = false; }}
+    {{~ _keysArray:$k }}
+      {{? INTERPOLATION.test($schema._children[$k]) }}
+        {{?$comma}},{{?}}{{= it.util.toQuotedString($k) }}: {{= templateFunc($schema._children[$k]) }}
+        {{ $comma = true; }}
+      {{?}}
+    {{~}}
+  };
 #}}
 
 
 {{? it.createErrors !== false }}
   {{
-    var INTERPOLATION = /\$\{([^\}]+)\}/g;
+    var INTERPOLATION = /\$\{[^\}]+\}/;
+    var INTERPOLATION_REPLACE = /\$\{([^\}]+)\}/g;
     var EMPTY_STR = /^\'\'\s*\+\s*|\s*\+\s*\'\'$/g;
 
     var $config = it.self.getKeyword($keyword).config
@@ -230,7 +239,7 @@
   function templateExpr(str) {
     str = it.util.escapeQuotes(str);
     if (!INTERPOLATION.test(str)) return "'" + str + "'";
-    var expr = "'" + str.replace(INTERPOLATION, function ($0, $1) {
+    var expr = "'" + str.replace(INTERPOLATION_REPLACE, function ($0, $1) {
       return "' + JSON.stringify(" + it.util.getData($1, $dataLvl, it.dataPathArr) + ") + '";
     }) + "'";
     return expr.replace(EMPTY_STR, '');
