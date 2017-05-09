@@ -348,6 +348,59 @@ describe('errorMessage value is an object', function() {
       }
     });
 
+    it('should replace errors for items with interpolated error messages', function() {
+      schema = {
+        type: 'array',
+        items: [
+          {
+            type: 'object',
+            required: ['baz'],
+            properties: {
+              baz: {type: 'integer', maximum: 2}
+            }
+          },
+          {
+            type: 'array',
+            items: {type: 'string', maxLength: 3},
+            minItems: 1
+          }
+        ],
+        minItems: 2,
+        additionalItems: false,
+        errorMessage: {
+          items: [
+            'data[0] should be an object with the integer property "baz" <= 2, data[0].baz is ${/0/baz}',
+            'data[1] should be an array with at least one string item with length <= 3, data[1] is ${/1}'
+          ]
+        }
+      };
+
+      var validData = [
+        {baz: 1},
+        ['abc']
+      ];
+
+      ajvs.forEach(function (ajv) {
+        validate = ajv.compile(schema);
+
+        assert.strictEqual(validate(validData), true);
+        testInvalid([],            ['minItems'], tmpl);
+        testInvalid([1],           ['minItems', ['type']], tmpl);
+        testInvalid([1, 2],        [['type'], ['type']], tmpl);
+        testInvalid([{baz: 'a'}],  ['minItems', ['type']], tmpl);
+        testInvalid([{baz: 3}],    ['minItems', ['maximum']], tmpl);
+        testInvalid([{baz: 3}, []],       [['maximum'], ['minItems']], tmpl);
+        testInvalid([{baz: 3}, [1]],      [['maximum'], ['type']], tmpl);
+        testInvalid([{baz: 3}, ['abcd']], [['maximum'], ['maxLength']], tmpl);
+      });
+
+      function tmpl(str, data) {
+        return str.replace('${/0/baz}', JSON.stringify(data[0] && data[0].baz))
+                  .replace('${/1}', JSON.stringify(data[1]));
+
+      }
+    });
+
 
     function testInvalid(data, expectedErrors, interpolate) {
       assert.strictEqual(validate(data), false);
