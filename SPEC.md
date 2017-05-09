@@ -78,7 +78,7 @@ console.log(ajv.errors);
 Limitation - it is not possible to define error messages for $ref keyword.
 
 
-## Templates // TODO
+## Templates // DONE
 
 Error messages used in errorMessage keyword can be templates using relative or absolute JSON pointers to data being validated, in which case the value will be interpolated. Primitive values (string, number, boolean, null) will be interpolated as is, structured values (array, object) will interpolated stable-stringified. Possibly, there can be a hook defined in options passed to `require('ajv-errors')` call to process interpolated values.
 
