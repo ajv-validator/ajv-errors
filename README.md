@@ -165,6 +165,36 @@ Processed errors:
 ```
 
 
+## Templates
+
+Custom error messages used in `errorMessage` keyword can be templates using [JSON-pointers](https://tools.ietf.org/html/rfc6901) or [relative JSON-pointers](http://tools.ietf.org/html/draft-luff-relative-json-pointer-00) to data being validated, in which case the value will be interpolated. Also see [examples](https://gist.github.com/geraintluff/5911303) of relative JSON-pointers.
+
+The syntax to interpolate a value is `${<pointer>}`.
+
+The values used in messages will be JSON-stringified:
+- to differentiate between `false` and `"false"`, etc.
+- to support structured values.
+
+Example:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "size": {
+      "type": "number",
+      "minimum": 4
+    }
+  },
+  "errorMessage": {
+    "properties": {
+      "size": "size should be a number bigger or equal to 4, current value is ${/size}"
+    }
+  }
+}
+```
+
+
 ## License
 
 [MIT](https://github.com/epoberezkin/ajv-errors/blob/master/LICENSE)

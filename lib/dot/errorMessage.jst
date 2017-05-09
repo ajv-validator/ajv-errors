@@ -27,20 +27,53 @@
   && {{=$child}} in {{=$errors}}
 #}}
 
+{{## def.compileTemplates: _keysArray:
+  var {{=$templates}} = {
+    {{ var $comma = false; }}
+    {{~ _keysArray:$k }}
+      {{? INTERPOLATION.test($schema[$k]) }}
+        {{?$comma}},{{?}}{{= it.util.toQuotedString($k) }}: {{= templateFunc($schema[$k]) }}
+        {{ $comma = true; }}
+      {{?}}
+    {{~}}
+  };
+#}}
+
+{{## def.compileChildTemplates: _children:
+  {{ var _keysArray = Object.keys($childErrors._children); }}
+  var {{=$templates}} = {
+    {{ var $comma = false; }}
+    {{~ _keysArray:$k }}
+      {{? INTERPOLATION.test($schema._children[$k]) }}
+        {{?$comma}},{{?}}{{= it.util.toQuotedString($k) }}: {{= templateFunc($schema._children[$k]) }}
+        {{ $comma = true; }}
+      {{?}}
+    {{~}}
+  };
+#}}
+
 
 {{? it.createErrors !== false }}
+  {{
+    var INTERPOLATION = /\$\{[^\}]+\}/;
+    var INTERPOLATION_REPLACE = /\$\{([^\}]+)\}/g;
+    var EMPTY_STR = /^\'\'\s*\+\s*|\s*\+\s*\'\'$/g;
+
+    var $config = it.self.getKeyword($keyword).config
+      , $dataPath = '_em_dataPath' + $lvl
+      , $i = '_em_i' + $lvl
+      , $key = '_em_key' + $lvl
+      , $err = '_em_err' + $lvl
+      , $child = '_em_child' + $lvl
+      , $childKeyword = '_em_childKeyword' + $lvl
+      , $matches = '_em_matches' + $lvl
+      , $isArray = '_em_isArray' + $lvl
+      , $errors = '_em_errors' + $lvl
+      , $templates = '_em_templates' + $lvl
+      , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
+  }}
+
   if (errors > 0) {
-    {{
-      var $dataPath = '_em_dataPath' + $lvl
-        , $i = '_em_i' + $lvl
-        , $key = '_em_key' + $lvl
-        , $err = '_em_err' + $lvl
-        , $child = '_em_child' + $lvl
-        , $matches = '_em_matches' + $lvl
-        , $isArray = '_em_isArray' + $lvl
-        , $errors = '_em_errors' + $lvl
-        , $errSchemaPathString = it.util.toQuotedString(it.errSchemaPath);
-    }}
     var {{=$dataPath}} = (dataPath || '') + {{= it.errorPath }};
     var {{=$i}}, {{=$err}}, {{=$errors}};
 
@@ -64,7 +97,7 @@
           , dataPath: {{=$dataPath}}
           , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
           , params: { errors: {{=$errors}} }
-          , message: {{=it.util.toQuotedString($schema)}}
+          , message: {{=templateExpr($schema)}}
           {{? it.opts.verbose }}
             , schema: {{=it.util.toQuotedString($schema)}}
             , parentSchema: validate.schema{{=it.schemaPath}}
@@ -75,8 +108,7 @@
       }
     {{??}}
       {{
-        var $config = it.self.getKeyword($keyword).config
-          , $keywordErrors = {}
+        var $keywordErrors = {}
           , $childErrors = { properties: {}, items: {} }
           , $hasProperties, $hasItems;
 
@@ -100,9 +132,11 @@
         }
       }}
 
-      {{? Object.keys($keywordErrors).length }}
+      {{ var $keywordErrorsArr = Object.keys($keywordErrors); }}
+      {{? $keywordErrorsArr.length }}
         {{=$i}} = 0;
         {{=$errors}} = {{= JSON.stringify($keywordErrors) }};
+        {{# def.compileTemplates:$keywordErrorsArr }}
         while ({{=$i}} < errors) {
           {{=$err}} = vErrors[{{=$i}}];
           if ({{# def.em_keywordErrorMatch}}) {
@@ -120,7 +154,9 @@
               , dataPath: {{=$dataPath}}
               , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
               , params: { errors: {{=$errors}}[{{=$key}}] }
-              , message: validate.schema{{=$schemaPath}}[{{=$key}}]
+              , message: {{=$key}} in {{=$templates}}
+                          ? {{=$templates}}[{{=$key}}] ()
+                          : validate.schema{{=$schemaPath}}[{{=$key}}]
               {{? it.opts.verbose }}
                 , schema: validate.schema{{=$schemaPath}}
                 , parentSchema: validate.schema{{=it.schemaPath}}
@@ -134,24 +170,34 @@
 
       {{? $hasProperties || $hasItems }}
         var {{=$isArray}} = Array.isArray({{=$data}});
-        if ({{? $hasProperties && $hasItems }}
-              typeof {{=$data}} == 'object'
-            {{?? $hasProperties}}
-              typeof {{=$data}} == 'object' && !{{=$isArray}}
-            {{??}}
-              {{=$isArray}}
-            {{?}})
-        {
-          {{=$i}} = 0;
-          {{=$errors}} = {{? $hasProperties && $hasItems }}
-                            {{=$isArray}}
-                            ? {{= JSON.stringify($childErrors.items) }}
-                            : {{= JSON.stringify($childErrors.properties) }}
-                         {{?? $hasProperties }}
-                            {{= JSON.stringify($childErrors.properties) }}
-                         {{??}}
-                            {{= JSON.stringify($childErrors.items) }}
-                         {{?}};
+        if
+          {{? $hasProperties && $hasItems }}
+            (typeof {{=$data}} == 'object') {
+              {{ var $childProp = '[' + $childKeyword + ']'; }}
+              {{=$i}} = 0;
+              if ({{=$isArray}}) {
+                var {{=$childKeyword}} = 'items';
+                {{=$errors}} = {{= JSON.stringify($childErrors.items) }}; 
+                {{# def.compileChildTemplates: items }}
+              } else {
+                var {{=$childKeyword}} = 'properties';
+                {{=$errors}} =  {{= JSON.stringify($childErrors.properties) }}; 
+                {{# def.compileChildTemplates: properties }}
+              }
+          {{?? $hasProperties }}
+            (typeof {{=$data}} == 'object' && !{{=$isArray}}) {
+              {{ var $childProp = '.properties'; }}
+              {{=$i}} = 0;
+              {{=$errors}} = {{= JSON.stringify($childErrors.properties) }};
+              {{# def.compileChildTemplates: properties }}
+          {{??}}
+            ({{=$isArray}}) {
+              {{ var $childProp = '.items'; }}
+              {{=$i}} = 0;
+              {{=$errors}} = {{= JSON.stringify($childErrors.items) }};
+              {{# def.compileChildTemplates: items }}
+          {{?}}
+
           var {{=$child}}, {{=$matches}};
           while ({{=$i}} < errors) {
             {{=$err}} = vErrors[{{=$i}}];
@@ -170,17 +216,9 @@
                 , dataPath: {{=$dataPath}} + '/' + {{=$key}}.replace(/~/g, '~0').replace(/\//g, '~1')
                 , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
                 , params: { errors: {{=$errors}}[{{=$key}}] }
-                , message: validate.schema{{=$schemaPath}}
-                            {{? $hasProperties && $hasItems }}
-                              [{{=$isArray}}
-                               ? 'items'
-                               : 'properties']
-                            {{?? $hasProperties }}
-                              .properties
-                            {{??}}
-                              .items
-                            {{?}}
-                            [{{=$key}}]
+                , message: {{=$key}} in {{=$templates}}
+                            ? {{=$templates}}[{{=$key}}] ()
+                            : validate.schema{{=$schemaPath}}{{=$childProp}}[{{=$key}}]
                 {{? it.opts.verbose }}
                   , schema: validate.schema{{=$schemaPath}}
                   , parentSchema: validate.schema{{=it.schemaPath}}
@@ -189,9 +227,25 @@
               };
               {{# def._addError:'custom' }}
             }
-          }
-        }
+          } /* for */
+        } /* if */
       {{?}}
     {{?}}
   }
 {{?}}
+
+
+{{
+  function templateExpr(str) {
+    str = it.util.escapeQuotes(str);
+    if (!INTERPOLATION.test(str)) return "'" + str + "'";
+    var expr = "'" + str.replace(INTERPOLATION_REPLACE, function ($0, $1) {
+      return "' + JSON.stringify(" + it.util.getData($1, $dataLvl, it.dataPathArr) + ") + '";
+    }) + "'";
+    return expr.replace(EMPTY_STR, '');
+  }
+
+  function templateFunc(str) {
+    return 'function() { return ' + templateExpr(str) + '; }';
+  }
+}}
