@@ -42,15 +42,18 @@ describe('options', function() {
         assertErrors(validate, [
           {
             keyword: 'type',
+            dataPath: '/foo',
             emUsed: true
           },
           {
             keyword: 'errorMessage',
             message: 'should be an object with an integer property baz',
+            dataPath: '/foo',
             errors: ['type']
           },
           {
-            keyword: 'required'
+            keyword: 'required',
+            dataPath: ''
           }
         ]);
       });
@@ -77,14 +80,17 @@ describe('options', function() {
         assertErrors(validate, [
           {
             keyword: 'maximum',
+            dataPath: '',
             emUsed: true
           },
           {
-            keyword: 'multipleOf'
+            keyword: 'multipleOf',
+            dataPath: ''
           },
           {
             keyword: 'errorMessage',
             message: 'should be <= 10',
+            dataPath: '',
             errors: ['maximum']
           }
         ]);
@@ -113,14 +119,17 @@ describe('options', function() {
         assertErrors(validate, [
           {
             keyword: 'type',
+            dataPath: '/foo',
             emUsed: true
           },
           {
             keyword: 'type',
+            dataPath: '/bar',
           },
           {
             keyword: 'errorMessage',
             message: 'foo should be a number',
+            dataPath: '/foo',
             errors: ['type']
           }
         ]);
@@ -135,6 +144,7 @@ describe('options', function() {
     expectedErrors.forEach(function (expectedErr, i) {
       var err = validate.errors[i];
       assert.strictEqual(err.keyword, expectedErr.keyword);
+      assert.strictEqual(err.dataPath, expectedErr.dataPath);
       assert.strictEqual(err.emUsed, expectedErr.emUsed);
       if (expectedErr.keyword == 'errorMessage') {
         assert.strictEqual(err.params.errors.length, expectedErr.errors.length);
