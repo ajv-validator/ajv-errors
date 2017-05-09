@@ -7,6 +7,18 @@ Custom error messages in JSON-Schema for Ajv validator
 [![Gitter](https://img.shields.io/gitter/room/ajv-validator/ajv.svg)](https://gitter.im/ajv-validator/ajv)
 
 
+## Contents
+
+- [Install](#install)
+- [Usage](#usage)
+  - [Single message](#single-message)
+  - [Messages for keywords](#messages-for-keywords)
+  - [Messages for properties and items](#messages-for-properties-and-items)
+- [Templates](templates)
+- [Options](options)
+- [License](license)
+
+
 ## Install
 
 ```
@@ -25,7 +37,10 @@ var ajv = new Ajv({allErrors: true, jsonPointers: true});
 require('ajv-errors')(ajv);
 ```
 
-### Replace all errors in the current schema and subschemas with a single message:
+
+### Single message
+
+Replace all errors in the current schema and subschemas with a single message:
 
 ```javascript
 var schema = {
@@ -61,7 +76,10 @@ Processed errors:
 ]
 ```
 
-### Replace errors for certain keywords in the current schema only:
+
+### Messages for keywords
+
+Replace errors for certain keywords in the current schema only:
 
 ```javascript
 var schema = {
@@ -109,7 +127,9 @@ Processed errors:
 ```
 
 
-### Replace errors for properties / items (and deeper):
+### Messages for properties and items
+
+Replace errors for properties / items (and deeper), regardless where in schema they were created:
 
 ```javascript
 var schema = {
