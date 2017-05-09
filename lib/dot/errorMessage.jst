@@ -44,7 +44,7 @@
   {{?}}
 #}}
 
-{{## def.compileTemplates: _keysArray:
+{{## def.em_compileTemplates: _keysArray:
   var {{=$templates}} = {
     {{ var $comma = false; }}
     {{~ _keysArray:$k }}
@@ -56,7 +56,7 @@
   };
 #}}
 
-{{## def.compileChildTemplates: _children:
+{{## def.em_compileChildTemplates: _children:
   {{ var _keysArray = Object.keys($childErrors._children); }}
   var {{=$templates}} = {
     {{ var $comma = false; }}
@@ -152,7 +152,7 @@
       {{? $keywordErrorsArr.length }}
         {{=$i}} = 0;
         {{=$errors}} = {{= JSON.stringify($keywordErrors) }};
-        {{# def.compileTemplates:$keywordErrorsArr }}
+        {{# def.em_compileTemplates:$keywordErrorsArr }}
         while ({{=$i}} < errors) {
           {{=$err}} = vErrors[{{=$i}}];
           if ({{# def.em_keywordErrorMatch}}) {
@@ -193,24 +193,24 @@
               if ({{=$isArray}}) {
                 var {{=$childKeyword}} = 'items';
                 {{=$errors}} = {{= JSON.stringify($childErrors.items) }}; 
-                {{# def.compileChildTemplates: items }}
+                {{# def.em_compileChildTemplates: items }}
               } else {
                 var {{=$childKeyword}} = 'properties';
                 {{=$errors}} =  {{= JSON.stringify($childErrors.properties) }}; 
-                {{# def.compileChildTemplates: properties }}
+                {{# def.em_compileChildTemplates: properties }}
               }
           {{?? $hasProperties }}
             (typeof {{=$data}} == 'object' && !{{=$isArray}}) {
               {{ var $childProp = '.properties'; }}
               {{=$i}} = 0;
               {{=$errors}} = {{= JSON.stringify($childErrors.properties) }};
-              {{# def.compileChildTemplates: properties }}
+              {{# def.em_compileChildTemplates: properties }}
           {{??}}
             ({{=$isArray}}) {
               {{ var $childProp = '.items'; }}
               {{=$i}} = 0;
               {{=$errors}} = {{= JSON.stringify($childErrors.items) }};
-              {{# def.compileChildTemplates: items }}
+              {{# def.em_compileChildTemplates: items }}
           {{?}}
 
           var {{=$child}}, {{=$matches}};
