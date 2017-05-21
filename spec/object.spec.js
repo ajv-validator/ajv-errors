@@ -63,55 +63,88 @@ describe('errorMessage value is an object', function() {
       });
     });
 
-    it('should replace keyword errors with interpolated error messages', function() {
-      var schema = {
-        type: 'object',
-        properties: {
-          foo: {
-            type: 'number',
-            minimum: 5,
-            maximum: 10,
-            errorMessage: {
-              type: 'property ${0#} should be number, it is ${0}',
-              minimum: 'property ${0#} should be >= 5, it is ${0}',
-              maximum: 'property foo should be <= 10'
+    describe('keyword errors with interpolated error messages', function() {
+      var schema, validate;
+
+      it('should replace errors', function() {
+        schema = {
+          type: 'object',
+          properties: {
+            foo: {
+              type: 'number',
+              minimum: 5,
+              maximum: 10,
+              errorMessage: {
+                type: 'property ${0#} should be number, it is ${0}',
+                minimum: 'property ${0#} should be >= 5, it is ${0}',
+                maximum: 'property foo should be <= 10'
+              }
             }
           }
-        }
-      };
+        };
 
-      ajvs.forEach(function (ajv) {
-        var validate = ajv.compile(schema);
-        assert.strictEqual(validate({foo: 7}), true);
-        testInvalid({foo: 'a'},   [['type']]);
-        testInvalid({foo: ['a']}, [['type']]);
-        testInvalid({foo: 4.5},   [['minimum']]);
-        testInvalid({foo: 10.5},  [['maximum']]);
-
-        function testInvalid(data, expectedErrors) {
-          assert.strictEqual(validate(data), false);
-          assert.strictEqual(validate.errors.length, expectedErrors.length);
-          validate.errors.forEach(function (err, i) {
-            var expectedErr = expectedErrors[i];
-            if (Array.isArray(expectedErr)) { // errorMessage error
-              assert.strictEqual(err.keyword, 'errorMessage');
-              var expectedMessage = schema.properties.foo
-                                    .errorMessage[err.params.errors[0].keyword]
-                                    .replace('${0#}', '"foo"')
-                                    .replace('${0}', JSON.stringify(data.foo));
-              assert.strictEqual(err.message, expectedMessage);
-              assert.strictEqual(err.dataPath, '/foo');
-              assert.strictEqual(err.schemaPath, '#/properties/foo/errorMessage');
-              var replacedKeywords = err.params.errors.map(function (e) {
-                return e.keyword;
-              });
-              assert.deepEqual(replacedKeywords.sort(), expectedErr.sort());
-            } else { // original error
-              assert.strictEqual(err.keyword, expectedErr);
-            }
-          });
-        }
+        ajvs.forEach(function (ajv) {
+          validate = ajv.compile(schema);
+          assert.strictEqual(validate({foo: 7}), true);
+          testInvalid({foo: 'a'},   [['type']]);
+          testInvalid({foo: ['a']}, [['type']]);
+          testInvalid({foo: 4.5},   [['minimum']]);
+          testInvalid({foo: 10.5},  [['maximum']]);
+        });
       });
+
+      it('should replace keyword errors with interpolated error messages with type integer', function() {
+        schema = {
+          type: 'object',
+          properties: {
+            foo: {
+              type: 'integer',
+              minimum: 5,
+              maximum: 10,
+              errorMessage: {
+                type: 'property ${0#} should be integer, it is ${0}',
+                minimum: 'property ${0#} should be >= 5, it is ${0}',
+                maximum: 'property foo should be <= 10'
+              }
+            }
+          }
+        };
+
+        ajvs.forEach(function (ajv) {
+          validate = ajv.compile(schema);
+          assert.strictEqual(validate({foo: 7}), true);
+          testInvalid({foo: 'a'},   [['type']]);
+          testInvalid({foo: ['a']}, [['type']]);
+          testInvalid({foo: 5.5},   [['type']]);
+          testInvalid({foo: 4.5},   [['type'], ['minimum']]);
+          testInvalid({foo: 4},   [['minimum']]);
+          testInvalid({foo: 11},  [['maximum']]);
+        });
+      });
+
+      function testInvalid(data, expectedErrors) {
+        assert.strictEqual(validate(data), false);
+        assert.strictEqual(validate.errors.length, expectedErrors.length);
+        validate.errors.forEach(function (err, i) {
+          var expectedErr = expectedErrors[i];
+          if (Array.isArray(expectedErr)) { // errorMessage error
+            assert.strictEqual(err.keyword, 'errorMessage');
+            var expectedMessage = schema.properties.foo
+                                  .errorMessage[err.params.errors[0].keyword]
+                                  .replace('${0#}', '"foo"')
+                                  .replace('${0}', JSON.stringify(data.foo));
+            assert.strictEqual(err.message, expectedMessage);
+            assert.strictEqual(err.dataPath, '/foo');
+            assert.strictEqual(err.schemaPath, '#/properties/foo/errorMessage');
+            var replacedKeywords = err.params.errors.map(function (e) {
+              return e.keyword;
+            });
+            assert.deepEqual(replacedKeywords.sort(), expectedErr.sort());
+          } else { // original error
+            assert.strictEqual(err.keyword, expectedErr);
+          }
+        });
+      }
     });
   });
 
