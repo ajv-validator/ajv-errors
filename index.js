@@ -13,7 +13,10 @@ module.exports = function (ajv, options) {
     valid: true,
     errors: 'full',
     config: {
-      ALLOW_OBJECT: ['required', 'dependencies'],
+      KEYWORD_PROPERTY_PARAMS: {
+        required: 'missingProperty',
+        dependencies: 'property'
+      },
       options: options || {}
     },
     metaSchema: {

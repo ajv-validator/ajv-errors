@@ -146,6 +146,62 @@ describe('errorMessage value is an object', function() {
         });
       }
     });
+
+    describe('"required" keyword errors for specific properties', function() {
+      var schema, validate;
+
+      it('should replace required errors with messages', function() {
+        schema = {
+          type: 'object',
+          required: ['foo', 'bar'],
+          properties: {
+            foo: { type: 'integer' },
+            bar: { type: 'string' }
+          },
+          errorMessage: {
+            type: 'should be an object',
+            required: {
+              foo: 'an integer property "foo" is required',
+              bar: 'a string property "bar" is required, "foo" is ${/foo}'
+            }
+          }
+        };
+
+        ajvs.forEach(function (ajv) {
+          validate = ajv.compile(schema);
+          assert.strictEqual(validate({foo: 1, bar: 'a'}), true);
+          testInvalid({},         [{required: 'foo'}, {required: 'bar'}]);
+          testInvalid({foo: 1},   [{required: 'bar'}]);
+          testInvalid({foo: 'a'}, ['type', {required: 'bar'}]);
+          testInvalid({bar: 'a'}, [{required: 'foo'}]);
+        });
+
+        function testInvalid(data, expectedErrors) {
+          assert.strictEqual(validate(data), false);
+          assert.strictEqual(validate.errors.length, expectedErrors.length);
+          validate.errors.forEach(function (err, i) {
+            var expectedErr = expectedErrors[i];
+            if (typeof expectedErr == 'object') { // errorMessage error
+              var errKeyword = Object.keys(expectedErr)[0];
+              var errProp = expectedErr[errKeyword];
+
+              assert.strictEqual(err.keyword, 'errorMessage');
+              var expectedMessage = schema.errorMessage[errKeyword][errProp]
+                                    .replace('${/foo}', JSON.stringify(data.foo));
+              assert.strictEqual(err.message, expectedMessage);
+              assert.strictEqual(err.dataPath, '');
+              assert.strictEqual(err.schemaPath, '#/errorMessage');
+              var replacedKeywords = err.params.errors.map(function (e) {
+                return e.keyword;
+              });
+              assert.deepEqual(replacedKeywords, Object.keys(expectedErr));
+            } else { // original error
+              assert.strictEqual(err.keyword, expectedErr);
+            }
+          });
+        }
+      });
+    });
   });
 
   describe('properties and items', function() {
