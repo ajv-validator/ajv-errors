@@ -128,6 +128,26 @@ Processed errors:
 ]
 ```
 
+For keywords "required" and "dependencies" it is possible to specify different messages for different properties:
+
+```javascript
+var schema = {
+  type: 'object',
+  required: ['foo', 'bar'],
+  properties: {
+    foo: { type: 'integer' },
+    bar: { type: 'string' }
+  },
+  errorMessage: {
+    type: 'should be an object', // will not replace internal "type" error for the property "foo"
+    required: {
+      foo: 'should have an integer property "foo"',
+      bar: 'should have a string property "bar"'
+    }
+  }
+};
+```
+
 
 ### Messages for properties and items
 
