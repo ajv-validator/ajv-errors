@@ -559,4 +559,56 @@ describe('errorMessage value is an object', function() {
       });
     }
   });
+
+  describe('default message', function() {
+    it('should replace all errors not replaced by keyword/properties/items messages', function() {
+      var schema = {
+        type: 'object',
+        required: ['foo', 'bar'],
+        properties: {
+          foo: { type: 'integer' },
+          bar: { type: 'string' }
+        },
+        errorMessage: {
+          properties: {
+            foo: 'data.foo should be integer',
+            bar: 'data.bar should be integer'
+          },
+          required: 'properties foo and bar are required',
+          _: 'should be an object with properties "foo" (integer) and "bar" (string)'
+        }
+      };
+
+      ajvs.forEach(function (ajv) {
+        var validate = ajv.compile(schema);
+
+        assert.strictEqual(validate({foo: 1, bar: 'a'}), true);
+        testInvalid({foo: 1}, [['required']]);
+        testInvalid({foo: 'a'}, [['required'], ['type']]);
+        testInvalid(null, [['type']]);
+
+        function testInvalid(data, expectedErrors) {
+          assert.strictEqual(validate(data), false);
+          assert.strictEqual(validate.errors.length, expectedErrors.length);
+          validate.errors.forEach(function (err, i) {
+            var expectedErr = expectedErrors[i];
+            if (Array.isArray(expectedErr)) { // errorMessage error
+              assert.equal(err.keyword, 'errorMessage');
+              assert.equal(err.schemaPath, '#/errorMessage');
+              var expectedMessage = err.dataPath
+                                    ? schema.errorMessage.properties.foo
+                                    : schema.errorMessage[expectedErr[0] == 'required' ? 'required' : '_'];
+              assert.equal(err.message, expectedMessage);
+              var replacedKeywords = err.params.errors.map(function (e) {
+                return e.keyword;
+              });
+              assert.deepEqual(replacedKeywords.sort(), expectedErr.sort());
+            } else { // original error
+              assert.strictEqual(err.keyword, expectedErr);
+            }
+          });
+        }
+      });
+    });
+  });
 });

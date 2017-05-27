@@ -139,35 +139,7 @@
     var {{=$dataPath}} = (dataPath || '') + {{= it.errorPath }};
     var {{=$i}}, {{=$err}}, {{=$errors}};
 
-
-    {{? typeof $schema == 'string' }}
-      {{=$i}} = 0;
-      {{=$errors}} = [];
-      while ({{=$i}} < errors) {
-        {{=$err}} = vErrors[{{=$i}}];
-        if ({{# def.em_errorMatch}}) {
-          {{=$errors}}.push({{=$err}});
-          {{# def.em_useError }}
-        } else {
-          {{=$i}}++;
-        }
-      }
-      if ({{=$errors}}.length) {
-        var err = {
-          keyword: '{{=$keyword}}'
-          , dataPath: {{=$dataPath}}
-          , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
-          , params: { errors: {{=$errors}} }
-          , message: {{=templateExpr($schema)}}
-          {{? it.opts.verbose }}
-            , schema: {{=it.util.toQuotedString($schema)}}
-            , parentSchema: validate.schema{{=it.schemaPath}}
-            , data: {{=$data}}
-          {{?}}
-        };
-        {{# def._addError:'custom' }}
-      }
-    {{??}} /* $schema is object */
+    {{? typeof $schema == 'object' }}
       {{
         var $keywordErrors = {}
           , $keywordPropErrors = {}
@@ -348,6 +320,36 @@
         } /* if */
       {{?}} /* $hasProperties || $hasItems */
     {{?}} /* $schema is object */
+
+    {{ var $schemaMessage = typeof $schema == 'string' ? $schema : $schema._; }}
+    {{? $schemaMessage }}
+      {{=$i}} = 0;
+      {{=$errors}} = [];
+      while ({{=$i}} < errors) {
+        {{=$err}} = vErrors[{{=$i}}];
+        if ({{# def.em_errorMatch}}) {
+          {{=$errors}}.push({{=$err}});
+          {{# def.em_useError }}
+        } else {
+          {{=$i}}++;
+        }
+      }
+      if ({{=$errors}}.length) {
+        var err = {
+          keyword: '{{=$keyword}}'
+          , dataPath: {{=$dataPath}}
+          , schemaPath: {{=$errSchemaPathString}} + '/{{=$keyword}}'
+          , params: { errors: {{=$errors}} }
+          , message: {{=templateExpr($schemaMessage)}}
+          {{? it.opts.verbose }}
+            , schema: {{=it.util.toQuotedString($schemaMessage)}}
+            , parentSchema: validate.schema{{=it.schemaPath}}
+            , data: {{=$data}}
+          {{?}}
+        };
+        {{# def._addError:'custom' }}
+      }
+    {{?}}
   }
 {{?}}
 
