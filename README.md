@@ -14,6 +14,7 @@ Custom error messages in JSON-Schema for Ajv validator
   - [Single message](#single-message)
   - [Messages for keywords](#messages-for-keywords)
   - [Messages for properties and items](#messages-for-properties-and-items)
+  - [Default message](#default-message)
 - [Templates](templates)
 - [Options](options)
 - [License](license)
@@ -205,6 +206,58 @@ Processed errors:
   }
 ]
 ```
+
+
+### Default message
+
+When the value of keyword `errorMessage` is an object you can specify a message that will be used if any error appears that is not specified by keywords/properties/items:
+
+```javascript
+var schema = {
+  type: 'object',
+  required: ['foo', 'bar'],
+  allOf: [{
+    properties: {
+      foo: { type: 'integer', minimum: 2 },
+      bar: { type: 'string', minLength: 2 }
+    },
+    additionalProperties: false
+  }],
+  errorMessage: {
+    type: 'data should be an object',
+    properties: {
+      foo: 'data.foo should be integer >= 2',
+      bar: 'data.bar should be string with length >= 2'
+    },
+    _: 'data should have properties "foo" and "bar" only'
+  }
+};
+
+var validate = ajv.compile(schema);
+console.log(validate({})); // false
+console.log(validate.errors); // processed errors
+```
+
+Processed errors:
+
+```javascript
+[
+  {
+    keyword: 'errorMessage',
+    message: 'data should be an object with properties "foo" and "bar" only',
+    dataPath: '',
+    // ...
+    params: {
+      errors: [
+        { keyword: 'required' /* , ... */ },
+        { keyword: 'required' /* , ... */ }
+      ]
+    },
+  }
+]
+```
+
+The message in property `_` of `errorMessage` replaces the same errors that would have been replaced if `errorMessage` were a string.
 
 
 ## Templates
