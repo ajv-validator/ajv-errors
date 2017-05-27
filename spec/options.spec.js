@@ -100,7 +100,52 @@ describe('options', function() {
       });
     });
 
-    describe('errorMessage is an object with keywords', function() {
+    describe('errorMessage is an object with "required" keyword with properties', function() {
+      it('should keep matched errors and mark them with {emUsed: true} property', function() {
+        var schema = {
+          type: 'object',
+          required: ['foo', 'bar'],
+          errorMessage: {
+            type: 'should be object',
+            required: {
+              foo: 'should have property foo',
+              bar: 'should have property bar',
+            }
+          }
+        };
+
+        var validate = ajv.compile(schema);
+        assert.strictEqual(validate({foo: 1, bar: 2}), true);
+        assert.strictEqual(validate({}), false);
+
+        assertErrors(validate, [
+          {
+            keyword: 'required',
+            dataPath: '',
+            emUsed: true
+          },
+          {
+            keyword: 'required',
+            dataPath: '',
+            emUsed: true
+          },
+          {
+            keyword: 'errorMessage',
+            message: 'should have property foo',
+            dataPath: '',
+            errors: ['required']
+          },
+          {
+            keyword: 'errorMessage',
+            message: 'should have property bar',
+            dataPath: '',
+            errors: ['required']
+          }
+        ]);
+      });
+    });
+
+    describe('errorMessage is an object with properties/items', function() {
       it('should keep matched errors and mark them with {emUsed: true} property', function() {
         var schema = {
           type: 'object',
