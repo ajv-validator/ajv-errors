@@ -308,6 +308,11 @@ Defaults:
   - non-empty string: this string is used as a separator to concatenate messages
 
 
+## Supporters
+
+[<img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAAwEAAAAJDg1YzBlYzFjLTA3YWYtNGEzOS1iMTdjLTQ0MTU1NWZjOGM0ZQ.jpg" width="48" height="48">](https://www.linkedin.com/in/rogerkepler/) [Roger Kepler](https://www.linkedin.com/in/rogerkepler/)
+
+
 ## License
 
 [MIT](https://github.com/epoberezkin/ajv-errors/blob/master/LICENSE)
