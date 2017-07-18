@@ -15,9 +15,9 @@ Custom error messages in JSON-Schema for Ajv validator
   - [Messages for keywords](#messages-for-keywords)
   - [Messages for properties and items](#messages-for-properties-and-items)
   - [Default message](#default-message)
-- [Templates](templates)
-- [Options](options)
-- [License](license)
+- [Templates](#templates)
+- [Options](#options)
+- [License](#license)
 
 
 ## Install
