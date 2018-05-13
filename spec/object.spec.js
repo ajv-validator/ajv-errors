@@ -177,6 +177,32 @@ describe('errorMessage value is an object', function() {
         });
       });
 
+      it('should replace required errors with messages only for specific properties', function() {
+        schema = {
+          type: 'object',
+          required: ['foo', 'bar'],
+          properties: {
+            foo: { type: 'integer' },
+            bar: { type: 'string' }
+          },
+          errorMessage: {
+            type: 'should be an object',
+            required: {
+              foo: 'an integer property "foo" is required'
+            }
+          }
+        };
+
+        ajvs.forEach(function (ajv) {
+          validate = ajv.compile(schema);
+          assert.strictEqual(validate({foo: 1, bar: 'a'}), true);
+          testInvalid({},         ['required', {required: 'foo'}]);
+          testInvalid({foo: 1},   ['required']);
+          testInvalid({foo: 'a'}, ['type', 'required']);
+          testInvalid({bar: 'a'}, [{required: 'foo'}]);
+        });
+      });
+
       it('should replace required and dependencies errors with messages', function() {
         schema = {
           type: 'object',
