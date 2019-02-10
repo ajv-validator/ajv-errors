@@ -11,7 +11,7 @@ module.exports = function (ajv, options) {
     inline: require('./lib/dotjs/errorMessage'),
     statements: true,
     valid: true,
-    errors: 'full',
+    errors: true,
     config: {
       KEYWORD_PROPERTY_PARAMS: {
         required: 'missingProperty',
