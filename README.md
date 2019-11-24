@@ -310,7 +310,7 @@ Defaults:
 
 ## Supporters
 
-[<img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAAwEAAAAJDg1YzBlYzFjLTA3YWYtNGEzOS1iMTdjLTQ0MTU1NWZjOGM0ZQ.jpg" width="48" height="48">](https://www.linkedin.com/in/rogerkepler/) [Roger Kepler](https://www.linkedin.com/in/rogerkepler/)
+[<img src="https://media.licdn.com/dms/image/C4D03AQFDWZfViRzMQg/profile-displayphoto-shrink_800_800/0?e=1580342400&v=beta&t=BPNdzvccvgv44NxW3S-4cb2wmT3WYCKB7KBY1hM-n9s" width="48" height="48">](https://www.linkedin.com/in/rogerkepler/) [Roger Kepler](https://www.linkedin.com/in/rogerkepler/)
 
 
 ## License
