@@ -313,6 +313,11 @@ Defaults:
 [<img src="https://media.licdn.com/dms/image/C4D03AQFDWZfViRzMQg/profile-displayphoto-shrink_800_800/0?e=1580342400&v=beta&t=BPNdzvccvgv44NxW3S-4cb2wmT3WYCKB7KBY1hM-n9s" width="48" height="48">](https://www.linkedin.com/in/rogerkepler/) [Roger Kepler](https://www.linkedin.com/in/rogerkepler/)
 
 
+## Enterprise support
+
+ajv-errors package is a part of [Tidelift enterprise subscription]((https://tidelift.com/subscription/pkg/npm-ajv-errors?utm_source=npm-ajv-errors&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)) - it provides a centralised commercial support to open-source software users, in addition to the support provided by software maintainers.
+
+
 ## License
 
 [MIT](https://github.com/epoberezkin/ajv-errors/blob/master/LICENSE)
