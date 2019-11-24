@@ -17,6 +17,7 @@ Custom error messages in JSON-Schema for Ajv validator
   - [Default message](#default-message)
 - [Templates](#templates)
 - [Options](#options)
+- [Supporters, Enterprise support, Security contact](#supporters)
 - [License](#license)
 
 
@@ -315,7 +316,14 @@ Defaults:
 
 ## Enterprise support
 
-ajv-errors package is a part of [Tidelift enterprise subscription]((https://tidelift.com/subscription/pkg/npm-ajv-errors?utm_source=npm-ajv-errors&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)) - it provides a centralised commercial support to open-source software users, in addition to the support provided by software maintainers.
+ajv-errors package is a part of [Tidelift enterprise subscription](https://tidelift.com/subscription/pkg/npm-ajv-errors?utm_source=npm-ajv-errors&utm_medium=referral&utm_campaign=enterprise&utm_term=repo) - it provides a centralised commercial support to open-source software users, in addition to the support provided by software maintainers.
+
+
+## Security contact
+
+To report a security vulnerability, please use the
+[Tidelift security contact](https://tidelift.com/security).
+Tidelift will coordinate the fix and disclosure. Please do NOT report security vulnerability via GitHub issues.
 
 
 ## License
