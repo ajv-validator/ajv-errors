@@ -197,29 +197,23 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
           gen.if(isObj)
           gen.if(
             isArr,
-            () =>
-              gen
-                .assign(childErrs, stringify(items))
-                .assign(templates, getTemplatesCode(items, schema.items))
-                .assign(childKwd, str`items`),
-            () =>
-              gen
-                .assign(childErrs, stringify(props))
-                .assign(templates, getTemplatesCode(props, schema.properties))
-                .assign(childKwd, str`properties`)
+            () => {
+              prepareChildren(items, schema.items)
+              gen.assign(childKwd, str`items`)
+            },
+            () => {
+              prepareChildren(props, schema.properties)
+              gen.assign(childKwd, str`properties`)
+            }
           )
           childProp = _`[${childKwd}]`
         } else if (items) {
-          gen
-            .if(isArr)
-            .assign(childErrs, stringify(items))
-            .assign(templates, getTemplatesCode(items, schema.items))
+          gen.if(isArr)
+          prepareChildren(items, schema.items)
           childProp = _`.items`
         } else if (props) {
-          gen
-            .if(and(isObj, not(isArr)))
-            .assign(childErrs, stringify(props))
-            .assign(templates, getTemplatesCode(props, schema.properties))
+          gen.if(and(isObj, not(isArr)))
+          prepareChildren(props, schema.properties)
           childProp = _`.properties`
         }
 
@@ -244,6 +238,11 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         )
 
         gen.endIf()
+
+        function prepareChildren<T extends string | number>(children: ErrorsMap<T>, msgs: {[K in string]?: string}): void {
+          gen.assign(childErrs, stringify(children))
+          gen.assign(templates, getTemplatesCode(children, msgs))
+        }
       }
 
       function processAllErrors(schMessage: string): void {
