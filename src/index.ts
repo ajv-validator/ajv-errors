@@ -142,7 +142,10 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         const kwdErrs = gen.const("emErrors", stringify(kwdPropErrors))
         const templatesCode: [string, Code][] = []
         for (const k in kwdPropErrors) {
-          templatesCode.push([k, getTemplatesCode(kwdPropErrors[k] as ErrorsMap<string>, schema[k])])
+          templatesCode.push([
+            k,
+            getTemplatesCode(kwdPropErrors[k] as ErrorsMap<string>, schema[k]),
+          ])
         }
         const templates = gen.const("templates", gen.object(...templatesCode))
 
@@ -229,7 +232,8 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         gen.forIn("key", childErrs, (key) =>
           gen.if(_`${childErrs}[${key}].length`, () => {
             reportError(cxt, {
-              message: () => _`${key} in ${templates} ? ${templates}[${key}]() : ${schemaValue}${childProp}[${key}]`,
+              message: () =>
+                _`${key} in ${templates} ? ${templates}[${key}]() : ${schemaValue}${childProp}[${key}]`,
               params: () => _`{errors: ${childErrs}[${key}]}`,
             })
             gen.assign(
