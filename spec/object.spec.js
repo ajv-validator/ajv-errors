@@ -1,23 +1,23 @@
 'use strict';
 
-var ajvErrors = require('../index');
-var Ajv = require('ajv');
-var assert = require('assert');
+const ajvErrors = require('..');
+const Ajv = require('ajv').default;
+const assert = require('assert');
 
 
-describe('errorMessage value is an object', function() {
-  var ajvs;
+describe('errorMessage value is an object', () => {
+  let ajvs;
 
-  beforeEach(function() {
+  beforeEach(() => {
     ajvs = [
-      ajvErrors(new Ajv({allErrors: true, jsonPointers: true/*, sourceCode: true, processCode: require('js-beautify').js_beautify*/ })),
-      ajvErrors(new Ajv({allErrors: true, jsonPointers: true, verbose: true/*, sourceCode: true, processCode: require('js-beautify').js_beautify*/ }))
+      ajvErrors(new Ajv({allErrors: true, code: {lines: true}})),
+      ajvErrors(new Ajv({allErrors: true, verbose: true, code: {lines: true}}))
     ];
   });
 
-  describe('keywords', function() {
-    it('should replace keyword errors with custom error messages', function() {
-      var schema = {
+  describe('keywords', () => {
+    it('should replace keyword errors with custom error messages', () => {
+      const schema = {
         type: 'object',
         required: ['foo'],
         properties: {
@@ -31,8 +31,8 @@ describe('errorMessage value is an object', function() {
         }
       };
 
-      ajvs.forEach(function (ajv) {
-        var validate = ajv.compile(schema);
+      ajvs.forEach((ajv) => {
+        const validate = ajv.compile(schema);
         assert.strictEqual(validate({foo: 1}), true);
         testInvalid({},                 [['required']]);
         testInvalid({bar: 2},           [['required'], ['additionalProperties']]);
@@ -44,14 +44,14 @@ describe('errorMessage value is an object', function() {
         function testInvalid(data, expectedErrors) {
           assert.strictEqual(validate(data), false);
           assert.strictEqual(validate.errors.length, expectedErrors.length);
-          validate.errors.forEach(function (err, i) {
-            var expectedErr = expectedErrors[i];
+          validate.errors.forEach((err, i) => {
+            const expectedErr = expectedErrors[i];
             if (Array.isArray(expectedErr)) { // errorMessage error
               assert.strictEqual(err.keyword, 'errorMessage');
               assert.strictEqual(err.message, schema.errorMessage[err.params.errors[0].keyword]);
               assert.strictEqual(err.dataPath, '');
               assert.strictEqual(err.schemaPath, '#/errorMessage');
-              var replacedKeywords = err.params.errors.map(function (e) {
+              const replacedKeywords = err.params.errors.map((e) => {
                 return e.keyword;
               });
               assert.deepEqual(replacedKeywords.sort(), expectedErr.sort());
@@ -63,10 +63,10 @@ describe('errorMessage value is an object', function() {
       });
     });
 
-    describe('keyword errors with interpolated error messages', function() {
-      var schema, validate;
+    describe('keyword errors with interpolated error messages', () => {
+      let schema, validate;
 
-      it('should replace errors', function() {
+      it('should replace errors', () => {
         schema = {
           type: 'object',
           properties: {
@@ -83,7 +83,7 @@ describe('errorMessage value is an object', function() {
           }
         };
 
-        ajvs.forEach(function (ajv) {
+        ajvs.forEach((ajv) => {
           validate = ajv.compile(schema);
           assert.strictEqual(validate({foo: 7}), true);
           testInvalid({foo: 'a'},   [['type']]);
@@ -93,7 +93,7 @@ describe('errorMessage value is an object', function() {
         });
       });
 
-      it('should replace keyword errors with interpolated error messages with type integer', function() {
+      it('should replace keyword errors with interpolated error messages with type integer', () => {
         schema = {
           type: 'object',
           properties: {
@@ -110,7 +110,7 @@ describe('errorMessage value is an object', function() {
           }
         };
 
-        ajvs.forEach(function (ajv) {
+        ajvs.forEach((ajv) => {
           validate = ajv.compile(schema);
           assert.strictEqual(validate({foo: 7}), true);
           testInvalid({foo: 'a'},   [['type']]);
@@ -125,18 +125,18 @@ describe('errorMessage value is an object', function() {
       function testInvalid(data, expectedErrors) {
         assert.strictEqual(validate(data), false);
         assert.strictEqual(validate.errors.length, expectedErrors.length);
-        validate.errors.forEach(function (err, i) {
-          var expectedErr = expectedErrors[i];
+        validate.errors.forEach((err, i) => {
+          const expectedErr = expectedErrors[i];
           if (Array.isArray(expectedErr)) { // errorMessage error
             assert.strictEqual(err.keyword, 'errorMessage');
-            var expectedMessage = schema.properties.foo
+            const expectedMessage = schema.properties.foo
                                   .errorMessage[err.params.errors[0].keyword]
                                   .replace('${0#}', '"foo"')
                                   .replace('${0}', JSON.stringify(data.foo));
             assert.strictEqual(err.message, expectedMessage);
             assert.strictEqual(err.dataPath, '/foo');
             assert.strictEqual(err.schemaPath, '#/properties/foo/errorMessage');
-            var replacedKeywords = err.params.errors.map(function (e) {
+            const replacedKeywords = err.params.errors.map((e) => {
               return e.keyword;
             });
             assert.deepEqual(replacedKeywords.sort(), expectedErr.sort());
@@ -147,10 +147,10 @@ describe('errorMessage value is an object', function() {
       }
     });
 
-    describe('"required" and "dependencies" keywords errors for specific properties', function() {
-      var schema, validate;
+    describe('"required" and "dependencies" keywords errors for specific properties', () => {
+      let schema, validate;
 
-      it('should replace required errors with messages', function() {
+      it('should replace required errors with messages', () => {
         schema = {
           type: 'object',
           required: ['foo', 'bar'],
@@ -167,7 +167,7 @@ describe('errorMessage value is an object', function() {
           }
         };
 
-        ajvs.forEach(function (ajv) {
+        ajvs.forEach((ajv) => {
           validate = ajv.compile(schema);
           assert.strictEqual(validate({foo: 1, bar: 'a'}), true);
           testInvalid({},         [{required: 'foo'}, {required: 'bar'}]);
@@ -177,7 +177,7 @@ describe('errorMessage value is an object', function() {
         });
       });
 
-      it('should replace required errors with messages only for specific properties', function() {
+      it('should replace required errors with messages only for specific properties', () => {
         schema = {
           type: 'object',
           required: ['foo', 'bar'],
@@ -193,17 +193,17 @@ describe('errorMessage value is an object', function() {
           }
         };
 
-        ajvs.forEach(function (ajv) {
+        ajvs.forEach((ajv) => {
           validate = ajv.compile(schema);
           assert.strictEqual(validate({foo: 1, bar: 'a'}), true);
           testInvalid({},         ['required', {required: 'foo'}]);
           testInvalid({foo: 1},   ['required']);
-          testInvalid({foo: 'a'}, ['type', 'required']);
+          testInvalid({foo: 'a'}, ['required', 'type']);
           testInvalid({bar: 'a'}, [{required: 'foo'}]);
         });
       });
 
-      it('should replace required and dependencies errors with messages', function() {
+      it('should replace required and dependencies errors with messages', () => {
         schema = {
           type: 'object',
           required: ['foo', 'bar'],
@@ -228,7 +228,7 @@ describe('errorMessage value is an object', function() {
           }
         };
 
-        ajvs.forEach(function (ajv) {
+        ajvs.forEach((ajv) => {
           validate = ajv.compile(schema);
           assert.strictEqual(validate({foo: 1, bar: 'a', quux: 2, boo: 3}), true);
           testInvalid({},         [{required: 'foo'}, {required: 'bar'}]);
@@ -240,7 +240,7 @@ describe('errorMessage value is an object', function() {
         });
       });
 
-      it('should replace required errors with interpolated messages', function() {
+      it('should replace required errors with interpolated messages', () => {
         schema = {
           type: 'object',
           required: ['foo', 'bar'],
@@ -257,7 +257,7 @@ describe('errorMessage value is an object', function() {
           }
         };
 
-        ajvs.forEach(function (ajv) {
+        ajvs.forEach((ajv) => {
           validate = ajv.compile(schema);
           assert.strictEqual(validate({foo: 1, bar: 'a'}), true);
           testInvalid({},         [{required: 'foo'}, {required: 'bar'}]);
@@ -270,20 +270,20 @@ describe('errorMessage value is an object', function() {
       function testInvalid(data, expectedErrors) {
         assert.strictEqual(validate(data), false);
         assert.strictEqual(validate.errors.length, expectedErrors.length);
-        validate.errors.forEach(function (err, i) {
-          var expectedErr = expectedErrors[i];
+        validate.errors.forEach((err, i) => {
+          const expectedErr = expectedErrors[i];
           if (typeof expectedErr == 'object') { // errorMessage error
-            var errKeyword = Object.keys(expectedErr)[0];
-            var errProp = expectedErr[errKeyword];
+            const errKeyword = Object.keys(expectedErr)[0];
+            const errProp = expectedErr[errKeyword];
 
             assert.strictEqual(err.keyword, 'errorMessage');
-            var expectedMessage = schema.errorMessage[errKeyword][errProp]
+            const expectedMessage = schema.errorMessage[errKeyword][errProp]
                                   .replace('${/foo}', JSON.stringify(data.foo))
                                   .replace('${/bar}', JSON.stringify(data.bar));
             assert.strictEqual(err.message, expectedMessage);
             assert.strictEqual(err.dataPath, '');
             assert.strictEqual(err.schemaPath, '#/errorMessage');
-            var replacedKeywords = err.params.errors.map(function (e) {
+            const replacedKeywords = err.params.errors.map((e) => {
               return e.keyword;
             });
             assert.deepEqual(replacedKeywords, Object.keys(expectedErr));
@@ -295,11 +295,11 @@ describe('errorMessage value is an object', function() {
     });
   });
 
-  describe('properties and items', function() {
-    var schema, validate;
+  describe('properties and items', () => {
+    let schema, validate;
 
-    describe('properties only', function() {
-      beforeEach(function() {
+    describe('properties only', () => {
+      beforeEach(() => {
         schema = {
           type: 'object',
           required: ['foo', 'bar'],
@@ -322,7 +322,7 @@ describe('errorMessage value is an object', function() {
         };
       });
 
-      it('should replace errors for properties with custom error messages', function() {
+      it('should replace errors for properties with custom error messages', () => {
         schema.errorMessage = {
           properties: {
             foo: 'data.foo should be an object with the integer property "baz" <= 2',
@@ -333,7 +333,7 @@ describe('errorMessage value is an object', function() {
         testProperties();
       });
 
-      it('should replace errors for properties with interpolated error messages', function() {
+      it('should replace errors for properties with interpolated error messages', () => {
         schema.errorMessage = {
           properties: {
             foo: 'data.foo should be an object with the integer property "baz" <= 2, "baz" is ${/foo/baz}',
@@ -351,12 +351,12 @@ describe('errorMessage value is an object', function() {
       });
 
       function testProperties(tmpl) {
-        var validData = {
+        const validData = {
           foo: {baz: 1},
           bar: ['abc']
         };
 
-        ajvs.forEach(function (ajv) {
+        ajvs.forEach((ajv) => {
           validate = ajv.compile(schema);
 
           assert.strictEqual(validate(validData), true);
@@ -372,8 +372,8 @@ describe('errorMessage value is an object', function() {
       }
     });
 
-    describe('items only', function() {
-      beforeEach(function() {
+    describe('items only', () => {
+      beforeEach(() => {
         schema = {
           type: 'array',
           items: [
@@ -396,7 +396,7 @@ describe('errorMessage value is an object', function() {
         };
       });
 
-      it('should replace errors for items with custom error messages', function() {
+      it('should replace errors for items with custom error messages', () => {
         schema.errorMessage = {
           items: [
             'data[0] should be an object with the integer property "baz" <= 2',
@@ -407,7 +407,7 @@ describe('errorMessage value is an object', function() {
         testItems();
       });
 
-      it('should replace errors for items with interpolated error messages', function() {
+      it('should replace errors for items with interpolated error messages', () => {
         schema.errorMessage = {
           items: [
             'data[0] should be an object with the integer property "baz" <= 2, data[0].baz is ${/0/baz}',
@@ -425,12 +425,12 @@ describe('errorMessage value is an object', function() {
       });
 
       function testItems(tmpl) {
-        var validData = [
+        const validData = [
           {baz: 1},
           ['abc']
         ];
 
-        ajvs.forEach(function (ajv) {
+        ajvs.forEach((ajv) => {
           validate = ajv.compile(schema);
 
           assert.strictEqual(validate(validData), true);
@@ -446,8 +446,8 @@ describe('errorMessage value is an object', function() {
       }
     });
 
-    describe('both properties and items', function() {
-      beforeEach(function() {
+    describe('both properties and items', () => {
+      beforeEach(() => {
         schema = {
           definitions: {
             foo: {
@@ -487,7 +487,7 @@ describe('errorMessage value is an object', function() {
         };
       });
 
-      it('should replace errors for properties and items with custom error messages', function() {
+      it('should replace errors for properties and items with custom error messages', () => {
         schema.errorMessage = {
           properties: {
             foo: 'data.foo should be an object with the integer property "baz" <= 2',
@@ -502,7 +502,7 @@ describe('errorMessage value is an object', function() {
         testPropsAndItems();
       });
 
-      it('should replace errors for properties and items with interpolated error messages', function() {
+      it('should replace errors for properties and items with interpolated error messages', () => {
         schema.errorMessage = {
           properties: {
             foo: 'data.foo should be an object with the integer property "baz" <= 2, "baz" is ${/foo/baz}',
@@ -525,17 +525,17 @@ describe('errorMessage value is an object', function() {
       });
 
       function testPropsAndItems(tmpl) {
-        var validData1 = {
+        const validData1 = {
           foo: {baz: 1},
           bar: ['abc']
         };
 
-        var validData2 = [
+        const validData2 = [
           {baz: 1},
           ['abc']
         ];
 
-        ajvs.forEach(function (ajv) {
+        ajvs.forEach((ajv) => {
           validate = ajv.compile(schema);
 
           assert.strictEqual(validate(validData1), true);
@@ -565,17 +565,17 @@ describe('errorMessage value is an object', function() {
     function testInvalid(data, expectedErrors, interpolate) {
       assert.strictEqual(validate(data), false);
       assert.strictEqual(validate.errors.length, expectedErrors.length);
-      validate.errors.forEach(function (err, i) {
-        var expectedErr = expectedErrors[i];
+      validate.errors.forEach((err, i) => {
+        const expectedErr = expectedErrors[i];
         if (Array.isArray(expectedErr)) { // errorMessage error
           assert.strictEqual(err.keyword, 'errorMessage');
-          var child = Array.isArray(data) ? 'items' : 'properties';
-          var expectedMessage = schema.errorMessage[child][err.dataPath.slice(1)];
+          const child = Array.isArray(data) ? 'items' : 'properties';
+          let expectedMessage = schema.errorMessage[child][err.dataPath.slice(1)];
           if (interpolate) expectedMessage = interpolate(expectedMessage, data);
           assert.strictEqual(err.message, expectedMessage);
           assert((Array.isArray(data) ? /^\/(0|1)$/ : /^\/(foo|bar)$/).test(err.dataPath));
           assert.strictEqual(err.schemaPath, '#/errorMessage');
-          var replacedKeywords = err.params.errors.map(function (e) {
+          const replacedKeywords = err.params.errors.map((e) => {
             return e.keyword;
           });
           assert.deepEqual(replacedKeywords.sort(), expectedErr.sort());
@@ -586,9 +586,9 @@ describe('errorMessage value is an object', function() {
     }
   });
 
-  describe('default message', function() {
-    it('should replace all errors not replaced by keyword/properties/items messages', function() {
-      var schema = {
+  describe('default message', () => {
+    it('should replace all errors not replaced by keyword/properties/items messages', () => {
+      const schema = {
         type: 'object',
         required: ['foo', 'bar'],
         properties: {
@@ -605,8 +605,8 @@ describe('errorMessage value is an object', function() {
         }
       };
 
-      ajvs.forEach(function (ajv) {
-        var validate = ajv.compile(schema);
+      ajvs.forEach((ajv) => {
+        const validate = ajv.compile(schema);
 
         assert.strictEqual(validate({foo: 1, bar: 'a'}), true);
         testInvalid({foo: 1}, [['required']]);
@@ -616,16 +616,16 @@ describe('errorMessage value is an object', function() {
         function testInvalid(data, expectedErrors) {
           assert.strictEqual(validate(data), false);
           assert.strictEqual(validate.errors.length, expectedErrors.length);
-          validate.errors.forEach(function (err, i) {
-            var expectedErr = expectedErrors[i];
+          validate.errors.forEach((err, i) => {
+            const expectedErr = expectedErrors[i];
             if (Array.isArray(expectedErr)) { // errorMessage error
               assert.equal(err.keyword, 'errorMessage');
               assert.equal(err.schemaPath, '#/errorMessage');
-              var expectedMessage = err.dataPath
+              const expectedMessage = err.dataPath
                                     ? schema.errorMessage.properties.foo
                                     : schema.errorMessage[expectedErr[0] == 'required' ? 'required' : '_'];
               assert.equal(err.message, expectedMessage);
-              var replacedKeywords = err.params.errors.map(function (e) {
+              const replacedKeywords = err.params.errors.map((e) => {
                 return e.keyword;
               });
               assert.deepEqual(replacedKeywords.sort(), expectedErr.sort());

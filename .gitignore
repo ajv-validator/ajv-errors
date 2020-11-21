@@ -40,3 +40,7 @@ jspm_packages
 lib/dotjs/*.js
 
 .DS_Store
+
+package-lock.json
+
+dist

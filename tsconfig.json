@@ -1,0 +1,7 @@
+{
+  "extends": "@ajv-validator/config",
+  "include": ["src"],
+  "compilerOptions": {
+    "outDir": "dist"
+  }
+}
