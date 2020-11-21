@@ -1,6 +1,7 @@
 rules:
   no-console: 0
   no-invalid-this: 0
+  no-template-curly-in-string: 0
 globals:
   beforeEach: false
   describe: false

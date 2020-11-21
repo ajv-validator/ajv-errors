@@ -10,8 +10,8 @@ describe('errorMessage value is an object', () => {
 
   beforeEach(() => {
     ajvs = [
-      ajvErrors(new Ajv({allErrors: true, code: {lines: true}})),
-      ajvErrors(new Ajv({allErrors: true, verbose: true, code: {lines: true}}))
+      ajvErrors(new Ajv({allErrors: true})),
+      ajvErrors(new Ajv({allErrors: true, verbose: true}))
     ];
   });
 
@@ -623,7 +623,7 @@ describe('errorMessage value is an object', () => {
               assert.equal(err.schemaPath, '#/errorMessage');
               const expectedMessage = err.dataPath
                                     ? schema.errorMessage.properties.foo
-                                    : schema.errorMessage[expectedErr[0] == 'required' ? 'required' : '_'];
+                                    : schema.errorMessage[expectedErr[0] === 'required' ? 'required' : '_'];
               assert.equal(err.message, expectedMessage);
               const replacedKeywords = err.params.errors.map((e) => {
                 return e.keyword;

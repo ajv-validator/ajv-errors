@@ -1,6 +1,8 @@
 import type {Plugin, CodeKeywordDefinition, KeywordCxt, ErrorObject, Code} from "ajv"
 import Ajv, {_, str, stringify, Name} from "ajv"
 import {and, or, not, strConcat} from "ajv/dist/compile/codegen"
+import {safeStringify, _Code} from "ajv/dist/compile/codegen/code"
+import {getData} from "ajv/dist/compile/context"
 import {reportError} from "ajv/dist/compile/errors"
 import N from "ajv/dist/compile/names"
 
@@ -34,6 +36,10 @@ export interface ErrorMessageOptions {
   keepErrors?: boolean
   singleError?: boolean
 }
+
+const INTERPOLATION = /\$\{[^}]+\}/
+const INTERPOLATION_REPLACE = /\$\{([^}]+)\}/g
+const EMPTY_STR = /^""\s*\+\s*|\s*\+\s*""$/g
 
 function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
   return {
@@ -93,6 +99,7 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
 
       function processKeywordErrors(kwdErrors: ErrorsMap<string>): void {
         const kwdErrs = gen.const("emErrors", stringify(kwdErrors))
+        const templates = gen.const("templates", getTemplatesCode(kwdErrors, schema))
         gen.forOf("err", N.vErrors, (err) =>
           gen.if(matchKeywordError(err, kwdErrs), () => {
             gen.code(_`${kwdErrs}[${err}.keyword].push(${err})`).assign(_`${err}.${used}`, true)
@@ -101,12 +108,12 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         const {singleError} = options
         if (singleError) {
           const message = gen.let("message", _`""`)
-          const paramsErrors = gen.const("paramsErrors", _`[]`)
+          const paramsErrors = gen.let("paramsErrors", _`[]`)
           loopErrors((key) => {
             gen.if(message, () =>
               gen.code(_`${message} += ${typeof singleError == "string" ? singleError : ";"}`)
             )
-            gen.code(_`${message} += ${schemaValue}[${key}]`) // TODO add template support
+            gen.code(_`${message} += ${errMessage(key)}`)
             gen.assign(paramsErrors, _`${paramsErrors}.concat(${kwdErrs}[${key}])`)
           })
           reportError(cxt, {
@@ -116,7 +123,7 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         } else {
           loopErrors((key) =>
             reportError(cxt, {
-              message: () => _`${schemaValue}[${key}]`, // TODO add template support
+              message: () => errMessage(key),
               params: () => _`{errors: ${kwdErrs}[${key}]}`,
             })
           )
@@ -125,10 +132,20 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         function loopErrors(body: (key: Name) => void): void {
           gen.forIn("key", kwdErrs, (key) => gen.if(_`${kwdErrs}[${key}].length`, () => body(key)))
         }
+
+        function errMessage(key: Name): Code {
+          return _`${key} in ${templates} ? ${templates}[${key}]() : ${schemaValue}[${key}]`
+        }
       }
 
       function processKeywordPropErrors(kwdPropErrors: {[K in string]?: ErrorsMap<string>}): void {
         const kwdErrs = gen.const("emErrors", stringify(kwdPropErrors))
+        const templatesCode: [string, Code][] = []
+        for (const k in kwdPropErrors) {
+          templatesCode.push([k, getTemplatesCode(kwdPropErrors[k] as ErrorsMap<string>, schema[k])])
+        }
+        const templates = gen.const("templates", gen.object(...templatesCode))
+
         const kwdPropParams = gen.scopeValue("obj", {
           ref: KEYWORD_PROPERTY_PARAMS,
           code: stringify(KEYWORD_PROPERTY_PARAMS),
@@ -150,8 +167,12 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
           gen.forIn("keyProp", _`${kwdErrs}[${key}]`, (keyProp) => {
             gen.assign(paramsErrors, _`${kwdErrs}[${key}][${keyProp}]`)
             gen.if(_`${paramsErrors}.length`, () => {
+              const tmpl = gen.const(
+                "tmpl",
+                _`${templates}[${key}] && ${templates}[${key}][${keyProp}]`
+              )
               reportError(cxt, {
-                message: () => _`${schemaValue}[${key}][${keyProp}]`, // TODO add template support
+                message: () => _`${tmpl} ? ${tmpl}() : ${schemaValue}[${key}][${keyProp}]`,
                 params: () => _`{errors: ${paramsErrors}}`,
               })
             })
@@ -167,21 +188,36 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         const childErrs = gen.let("emErrors")
         let childKwd: Name
         let childProp: Code
+        const templates = gen.let("templates")
         if (props && items) {
           childKwd = gen.let("emChildKwd")
           gen.if(isObj)
           gen.if(
             isArr,
-            () => gen.assign(childErrs, stringify(items)).assign(childKwd, str`items`),
-            () => gen.assign(childErrs, stringify(props)).assign(childKwd, str`properties`)
+            () =>
+              gen
+                .assign(childErrs, stringify(items))
+                .assign(templates, getTemplatesCode(items, schema.items))
+                .assign(childKwd, str`items`),
+            () =>
+              gen
+                .assign(childErrs, stringify(props))
+                .assign(templates, getTemplatesCode(props, schema.properties))
+                .assign(childKwd, str`properties`)
           )
           childProp = _`[${childKwd}]`
-        } else if (props) {
-          gen.if(and(isObj, not(isArr))).assign(childErrs, stringify(props))
-          childProp = _`.properties`
-        } else {
-          gen.if(isArr).assign(childErrs, stringify(items))
+        } else if (items) {
+          gen
+            .if(isArr)
+            .assign(childErrs, stringify(items))
+            .assign(templates, getTemplatesCode(items, schema.items))
           childProp = _`.items`
+        } else if (props) {
+          gen
+            .if(and(isObj, not(isArr)))
+            .assign(childErrs, stringify(props))
+            .assign(templates, getTemplatesCode(props, schema.properties))
+          childProp = _`.properties`
         }
 
         gen.forOf("err", N.vErrors, (err) =>
@@ -193,7 +229,7 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         gen.forIn("key", childErrs, (key) =>
           gen.if(_`${childErrs}[${key}].length`, () => {
             reportError(cxt, {
-              message: () => _`${schemaValue}${childProp}[${key}]`, // TODO add template support
+              message: () => _`${key} in ${templates} ? ${templates}[${key}]() : ${schemaValue}${childProp}[${key}]`,
               params: () => _`{errors: ${childErrs}[${key}]}`,
             })
             gen.assign(
@@ -215,7 +251,7 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         )
         gen.if(_`${errs}.length`, () => {
           reportError(cxt, {
-            message: schMessage, // TODO add template support
+            message: () => templateExpr(schMessage),
             params: () => _`{errors: ${errs}}`,
           })
         })
@@ -224,9 +260,7 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
       function removeUsedErrors(): void {
         const errs = gen.const("emErrs", _`[]`)
         gen.forOf("err", N.vErrors, (err) =>
-          gen.if(_`!${err}.${used}`, () =>
-            gen.code(_`${errs}.push(${err})`)
-          )
+          gen.if(_`!${err}.${used}`, () => gen.code(_`${errs}.push(${err})`))
         )
         gen.assign(N.vErrors, errs).assign(N.errors, _`${errs}.length`)
       }
@@ -284,6 +318,31 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
           _`${err}.schemaPath[${it.errSchemaPath}.length] === "/"`
         )
       }
+
+      function getTemplatesCode(keys: Record<string, any>, msgs: {[K in string]?: string}): Code {
+        const templatesCode: [string, Code][] = []
+        for (const k in keys) {
+          const msg = msgs[k] as string
+          if (INTERPOLATION.test(msg)) templatesCode.push([k, templateFunc(msg)])
+        }
+        return gen.object(...templatesCode)
+      }
+
+      function templateExpr(msg: string): Code {
+        if (!INTERPOLATION.test(msg)) return stringify(msg)
+        return new _Code(
+          safeStringify(msg)
+            .replace(
+              INTERPOLATION_REPLACE,
+              (_s, ptr) => `" + JSON.stringify(${getData(ptr, it)}) + "`
+            )
+            .replace(EMPTY_STR, "")
+        )
+      }
+
+      function templateFunc(msg: string): Code {
+        return _`function(){return ${templateExpr(msg)}}`
+      }
     },
     metaSchema: {
       anyOf: [
@@ -313,60 +372,17 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
   }
 }
 
-const ajvErrors: Plugin<ErrorMessageOptions> = (ajv: Ajv, options: ErrorMessageOptions = {}): Ajv => {
+const ajvErrors: Plugin<ErrorMessageOptions> = (
+  ajv: Ajv,
+  options: ErrorMessageOptions = {}
+): Ajv => {
   if (!ajv.opts.allErrors) throw new Error("ajv-errors: Ajv option allErrors must be true")
-  if (ajv.opts.jsPropertySyntax)
-    {throw new Error("ajv-errors: ajv option jsPropertySyntax is not supported")}
+  if (ajv.opts.jsPropertySyntax) {
+    throw new Error("ajv-errors: ajv option jsPropertySyntax is not supported")
+  }
   return ajv.addKeyword(errorMessage(options))
 }
 
 export default ajvErrors
 module.exports = ajvErrors
 module.exports.default = ajvErrors
-
-// module.exports = function (ajv, options) {
-//   if (!ajv._opts.allErrors) throw new Error('ajv-errors: Ajv option allErrors must be true');
-//   if (!ajv._opts.jsonPointers) {
-//     console.warn('ajv-errors: Ajv option jsonPointers changed to true');
-//     ajv._opts.jsonPointers = true;
-//   }
-
-//   ajv.addKeyword('errorMessage', {
-//     inline: require('./lib/dotjs/errorMessage'),
-//     statements: true,
-//     valid: true,
-//     errors: 'full',
-//     config: {
-//       KEYWORD_PROPERTY_PARAMS: {
-//         required: 'missingProperty',
-//         dependencies: 'property'
-//       },
-//       options: options || {}
-//     },
-//     metaSchema: {
-//       'type': ['string', 'object'],
-//       properties: {
-//         properties: {$ref: '#/$defs/stringMap'},
-//         items: {$ref: '#/$defs/stringList'},
-//         required: {$ref: '#/$defs/stringOrMap'},
-//         dependencies: {$ref: '#/$defs/stringOrMap'}
-//       },
-//       additionalProperties: {'type': 'string'},
-//       $defs: {
-//         stringMap: {
-//           'type': ['object'],
-//           additionalProperties: {'type': 'string'}
-//         },
-//         stringOrMap: {
-//           'type': ['string', 'object'],
-//           additionalProperties: {'type': 'string'}
-//         },
-//         stringList: {
-//           'type': ['array'],
-//           items: {'type': 'string'}
-//         }
-//       }
-//     }
-//   });
-//   return ajv;
-// };

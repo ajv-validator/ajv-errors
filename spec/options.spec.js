@@ -44,6 +44,10 @@ describe('options', () => {
 
         assertErrors(validate, [
           {
+            keyword: 'required',
+            dataPath: ''
+          },
+          {
             keyword: 'type',
             dataPath: '/foo',
             emUsed: true
@@ -54,10 +58,6 @@ describe('options', () => {
             dataPath: '/foo',
             errors: ['type']
           },
-          {
-            keyword: 'required',
-            dataPath: ''
-          }
         ]);
       });
     });
@@ -246,7 +246,7 @@ describe('options', () => {
       assert.strictEqual(err.keyword, expectedErr.keyword);
       assert.strictEqual(err.dataPath, expectedErr.dataPath);
       assert.strictEqual(err.emUsed, expectedErr.emUsed);
-      if (expectedErr.keyword == 'errorMessage') {
+      if (expectedErr.keyword === 'errorMessage') {
         assert.strictEqual(err.params.errors.length, expectedErr.errors.length);
         expectedErr.errors.forEach((matchedKeyword, j) => {
           assert.strictEqual(err.params.errors[j].keyword, matchedKeyword);

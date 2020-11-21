@@ -19,10 +19,10 @@ describe('ajv-errors', () => {
     });
   });
 
-  it.skip('should set option jsonPointers if not set', () => {
-    const ajv = new Ajv({allErrors: true});
-    assert.strictEqual(ajv._opts.jsonPointers, undefined);
-    ajvErrors(ajv);
-    assert.strictEqual(ajv._opts.jsonPointers, true);
+  it('should throw if option jsPropertySyntax is set', () => {
+    const ajv = new Ajv({allErrors: true, jsPropertySyntax: true, logger: false});
+    assert.throws(() => {
+      ajvErrors(ajv);
+    });
   });
 });
