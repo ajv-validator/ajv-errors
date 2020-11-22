@@ -12,8 +12,8 @@
     "eslint": "eslint \"src/**/*.*s\" \"spec/**/*.*s\"",
     "prettier:write": "prettier --write \"./**/*.{md,json,ts,js}\"",
     "prettier:check": "prettier --list-different \"./**/*.{md,json,ts,js}\"",
-    "test-spec": "jest spec/*.{js,ts}",
-    "test-cov": "jest spec/*.{js,ts} --coverage",
+    "test-spec": "jest \"spec/*.ts\"",
+    "test-cov": "jest \"spec/*.ts\" --coverage",
     "test": "npm run eslint && npm run build && npm run test-cov",
     "prepublish": "npm run build"
   },
