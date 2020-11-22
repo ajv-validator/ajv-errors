@@ -31,9 +31,9 @@ npm install ajv-errors
 Add the keyword `errorMessages` to Ajv instance:
 
 ```javascript
-var Ajv = require("ajv")
-var ajv = new Ajv({allErrors: true, jsonPointers: true})
-// Ajv options allErrors and jsonPointers are required
+const Ajv = require("ajv").default
+const ajv = new Ajv({allErrors: true})
+// Ajv option allErrors is required
 require("ajv-errors")(ajv /*, {singleError: true} */)
 ```
 
@@ -44,7 +44,7 @@ See [Options](#options) below.
 Replace all errors in the current schema and subschemas with a single message:
 
 ```javascript
-var schema = {
+const schema = {
   type: "object",
   required: ["foo"],
   properties: {
@@ -54,7 +54,7 @@ var schema = {
   errorMessage: "should be an object with an integer property foo only",
 }
 
-var validate = ajv.compile(schema)
+const validate = ajv.compile(schema)
 console.log(validate({foo: "a", bar: 2})) // false
 console.log(validate.errors) // processed errors
 ```
@@ -82,7 +82,7 @@ Processed errors:
 Replace errors for certain keywords in the current schema only:
 
 ```javascript
-var schema = {
+const schema = {
   type: "object",
   required: ["foo"],
   properties: {
@@ -96,7 +96,7 @@ var schema = {
   },
 }
 
-var validate = ajv.compile(schema)
+const validate = ajv.compile(schema)
 console.log(validate({foo: "a", bar: 2})) // false
 console.log(validate.errors) // processed errors
 ```
@@ -127,7 +127,7 @@ Processed errors:
 For keywords "required" and "dependencies" it is possible to specify different messages for different properties:
 
 ```javascript
-var schema = {
+const schema = {
   type: "object",
   required: ["foo", "bar"],
   properties: {
@@ -149,7 +149,7 @@ var schema = {
 Replace errors for properties / items (and deeper), regardless where in schema they were created:
 
 ```javascript
-var schema = {
+const schema = {
   type: "object",
   required: ["foo", "bar"],
   allOf: [
@@ -169,7 +169,7 @@ var schema = {
   },
 }
 
-var validate = ajv.compile(schema)
+const validate = ajv.compile(schema)
 console.log(validate({foo: 1, bar: "a"})) // false
 console.log(validate.errors) // processed errors
 ```
@@ -201,10 +201,10 @@ Processed errors:
 
 ### Default message
 
-When the value of keyword `errorMessage` is an object you can specify a message that will be used if any error appears that is not specified by keywords/properties/items:
+When the value of keyword `errorMessage` is an object you can specify a message that will be used if any error appears that is not specified by keywords/properties/items using `_` property:
 
 ```javascript
-var schema = {
+const schema = {
   type: "object",
   required: ["foo", "bar"],
   allOf: [
@@ -226,7 +226,7 @@ var schema = {
   },
 }
 
-var validate = ajv.compile(schema)
+const validate = ajv.compile(schema)
 console.log(validate({})) // false
 console.log(validate.errors) // processed errors
 ```
@@ -262,20 +262,20 @@ The values used in messages will be JSON-stringified:
 
 Example:
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "size": {
-      "type": "number",
-      "minimum": 4
-    }
+```javascript
+const schema = {
+  type: "object",
+  properties: {
+    size: {
+      type: "number",
+      minimum: 4,
+    },
   },
-  "errorMessage": {
-    "properties": {
-      "size": "size should be a number bigger or equal to 4, current value is ${/size}"
-    }
-  }
+  errorMessage: {
+    properties: {
+      size: "size should be a number bigger or equal to 4, current value is ${/size}",
+    },
+  },
 }
 ```
 
@@ -298,7 +298,7 @@ Defaults:
 
 ## Supporters
 
-[<img src="https://media.licdn.com/dms/image/C4D03AQFDWZfViRzMQg/profile-displayphoto-shrink_800_800/0?e=1580342400&v=beta&t=BPNdzvccvgv44NxW3S-4cb2wmT3WYCKB7KBY1hM-n9s" width="48" height="48">](https://www.linkedin.com/in/rogerkepler/) [Roger Kepler](https://www.linkedin.com/in/rogerkepler/)
+[Roger Kepler](https://www.linkedin.com/in/rogerkepler/)
 
 ## Enterprise support
 

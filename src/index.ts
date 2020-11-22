@@ -101,9 +101,9 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         const kwdErrs = gen.const("emErrors", stringify(kwdErrors))
         const templates = gen.const("templates", getTemplatesCode(kwdErrors, schema))
         gen.forOf("err", N.vErrors, (err) =>
-          gen.if(matchKeywordError(err, kwdErrs), () => {
+          gen.if(matchKeywordError(err, kwdErrs), () =>
             gen.code(_`${kwdErrs}[${err}.keyword].push(${err})`).assign(_`${err}.${used}`, true)
-          })
+          )
         )
         const {singleError} = options
         if (singleError) {
@@ -116,15 +116,12 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
             gen.code(_`${message} += ${errMessage(key)}`)
             gen.assign(paramsErrors, _`${paramsErrors}.concat(${kwdErrs}[${key}])`)
           })
-          reportError(cxt, {
-            message: () => message,
-            params: () => _`{errors: ${paramsErrors}}`,
-          })
+          reportError(cxt, {message, params: _`{errors: ${paramsErrors}}`})
         } else {
           loopErrors((key) =>
             reportError(cxt, {
-              message: () => errMessage(key),
-              params: () => _`{errors: ${kwdErrs}[${key}]}`,
+              message: errMessage(key),
+              params: _`{errors: ${kwdErrs}[${key}]}`,
             })
           )
         }
@@ -175,8 +172,8 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
                 _`${templates}[${key}] && ${templates}[${key}][${keyProp}]`
               )
               reportError(cxt, {
-                message: () => _`${tmpl} ? ${tmpl}() : ${schemaValue}[${key}][${keyProp}]`,
-                params: () => _`{errors: ${paramsErrors}}`,
+                message: _`${tmpl} ? ${tmpl}() : ${schemaValue}[${key}][${keyProp}]`,
+                params: _`{errors: ${paramsErrors}}`,
               })
             })
           })
@@ -198,22 +195,22 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
           gen.if(
             isArr,
             () => {
-              prepareChildren(items, schema.items)
+              init(items, schema.items)
               gen.assign(childKwd, str`items`)
             },
             () => {
-              prepareChildren(props, schema.properties)
+              init(props, schema.properties)
               gen.assign(childKwd, str`properties`)
             }
           )
           childProp = _`[${childKwd}]`
         } else if (items) {
           gen.if(isArr)
-          prepareChildren(items, schema.items)
+          init(items, schema.items)
           childProp = _`.items`
         } else if (props) {
           gen.if(and(isObj, not(isArr)))
-          prepareChildren(props, schema.properties)
+          init(props, schema.properties)
           childProp = _`.properties`
         }
 
@@ -226,9 +223,8 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         gen.forIn("key", childErrs, (key) =>
           gen.if(_`${childErrs}[${key}].length`, () => {
             reportError(cxt, {
-              message: () =>
-                _`${key} in ${templates} ? ${templates}[${key}]() : ${schemaValue}${childProp}[${key}]`,
-              params: () => _`{errors: ${childErrs}[${key}]}`,
+              message: _`${key} in ${templates} ? ${templates}[${key}]() : ${schemaValue}${childProp}[${key}]`,
+              params: _`{errors: ${childErrs}[${key}]}`,
             })
             gen.assign(
               _`${N.vErrors}[${N.errors}-1].dataPath`,
@@ -239,7 +235,10 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
 
         gen.endIf()
 
-        function prepareChildren<T extends string | number>(children: ErrorsMap<T>, msgs: {[K in string]?: string}): void {
+        function init<T extends string | number>(
+          children: ErrorsMap<T>,
+          msgs: {[K in string]?: string}
+        ): void {
           gen.assign(childErrs, stringify(children))
           gen.assign(templates, getTemplatesCode(children, msgs))
         }
@@ -252,12 +251,12 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
             gen.code(_`${errs}.push(${err})`).assign(_`${err}.${used}`, true)
           )
         )
-        gen.if(_`${errs}.length`, () => {
+        gen.if(_`${errs}.length`, () =>
           reportError(cxt, {
-            message: () => templateExpr(schMessage),
-            params: () => _`{errors: ${errs}}`,
+            message: templateExpr(schMessage),
+            params: _`{errors: ${errs}}`,
           })
-        })
+        )
       }
 
       function removeUsedErrors(): void {
