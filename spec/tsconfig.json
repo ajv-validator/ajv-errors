@@ -1,0 +1,7 @@
+{
+  "extends": "..",
+  "include": ["."],
+  "compilerOptions": {
+    "types": ["node", "jest"]
+  }
+}

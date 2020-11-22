@@ -1,11 +1,9 @@
-"use strict"
-
-const ajvErrors = require("..")
-const Ajv = require("ajv").default
-const assert = require("assert")
+import ajvErrors from ".."
+import Ajv, {SchemaObject, ErrorObject, ValidateFunction} from "ajv"
+import assert = require("assert")
 
 describe("errorMessage value is an object", () => {
-  let ajvs
+  let ajvs: Ajv[]
 
   beforeEach(() => {
     ajvs = [
@@ -16,7 +14,7 @@ describe("errorMessage value is an object", () => {
 
   describe("keywords", () => {
     it("should replace keyword errors with custom error messages", () => {
-      const schema = {
+      const schema: SchemaObject = {
         type: "object",
         required: ["foo"],
         properties: {
@@ -40,9 +38,9 @@ describe("errorMessage value is an object", () => {
         testInvalid({foo: "a", bar: 2}, ["type", ["additionalProperties"]])
         testInvalid(1, [["type"]])
 
-        function testInvalid(data, expectedErrors) {
+        function testInvalid(data: any, expectedErrors: (string | string[])[]): void {
           assert.strictEqual(validate(data), false)
-          assert.strictEqual(validate.errors.length, expectedErrors.length)
+          assert.strictEqual(validate.errors?.length, expectedErrors.length)
           validate.errors.forEach((err, i) => {
             const expectedErr = expectedErrors[i]
             if (Array.isArray(expectedErr)) {
@@ -51,10 +49,8 @@ describe("errorMessage value is an object", () => {
               assert.strictEqual(err.message, schema.errorMessage[err.params.errors[0].keyword])
               assert.strictEqual(err.dataPath, "")
               assert.strictEqual(err.schemaPath, "#/errorMessage")
-              const replacedKeywords = err.params.errors.map((e) => {
-                return e.keyword
-              })
-              assert.deepEqual(replacedKeywords.sort(), expectedErr.sort())
+              const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
+              assert.deepStrictEqual(replacedKeywords.sort(), expectedErr.sort())
             } else {
               // original error
               assert.strictEqual(err.keyword, expectedErr)
@@ -65,7 +61,7 @@ describe("errorMessage value is an object", () => {
     })
 
     describe("keyword errors with interpolated error messages", () => {
-      let schema, validate
+      let schema: SchemaObject, validate: ValidateFunction
 
       it("should replace errors", () => {
         schema = {
@@ -123,9 +119,9 @@ describe("errorMessage value is an object", () => {
         })
       })
 
-      function testInvalid(data, expectedErrors) {
+      function testInvalid(data: any, expectedErrors: (string | string[])[]): void {
         assert.strictEqual(validate(data), false)
-        assert.strictEqual(validate.errors.length, expectedErrors.length)
+        assert.strictEqual(validate.errors?.length, expectedErrors.length)
         validate.errors.forEach((err, i) => {
           const expectedErr = expectedErrors[i]
           if (Array.isArray(expectedErr)) {
@@ -137,10 +133,8 @@ describe("errorMessage value is an object", () => {
             assert.strictEqual(err.message, expectedMessage)
             assert.strictEqual(err.dataPath, "/foo")
             assert.strictEqual(err.schemaPath, "#/properties/foo/errorMessage")
-            const replacedKeywords = err.params.errors.map((e) => {
-              return e.keyword
-            })
-            assert.deepEqual(replacedKeywords.sort(), expectedErr.sort())
+            const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
+            assert.deepStrictEqual(replacedKeywords.sort(), expectedErr.sort())
           } else {
             // original error
             assert.strictEqual(err.keyword, expectedErr)
@@ -150,7 +144,7 @@ describe("errorMessage value is an object", () => {
     })
 
     describe('"required" and "dependencies" keywords errors for specific properties', () => {
-      let schema, validate
+      let schema: SchemaObject, validate: ValidateFunction
 
       it("should replace required errors with messages", () => {
         schema = {
@@ -269,9 +263,9 @@ describe("errorMessage value is an object", () => {
         })
       })
 
-      function testInvalid(data, expectedErrors) {
+      function testInvalid(data: any, expectedErrors: (string | {[K in string]?: string})[]): void {
         assert.strictEqual(validate(data), false)
-        assert.strictEqual(validate.errors.length, expectedErrors.length)
+        assert.strictEqual(validate.errors?.length, expectedErrors.length)
         validate.errors.forEach((err, i) => {
           const expectedErr = expectedErrors[i]
           if (typeof expectedErr == "object") {
@@ -280,16 +274,14 @@ describe("errorMessage value is an object", () => {
             const errProp = expectedErr[errKeyword]
 
             assert.strictEqual(err.keyword, "errorMessage")
-            const expectedMessage = schema.errorMessage[errKeyword][errProp]
+            const expectedMessage = schema.errorMessage[errKeyword][errProp as string]
               .replace("${/foo}", JSON.stringify(data.foo))
               .replace("${/bar}", JSON.stringify(data.bar))
             assert.strictEqual(err.message, expectedMessage)
             assert.strictEqual(err.dataPath, "")
             assert.strictEqual(err.schemaPath, "#/errorMessage")
-            const replacedKeywords = err.params.errors.map((e) => {
-              return e.keyword
-            })
-            assert.deepEqual(replacedKeywords, Object.keys(expectedErr))
+            const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
+            assert.deepStrictEqual(replacedKeywords, Object.keys(expectedErr))
           } else {
             // original error
             assert.strictEqual(err.keyword, expectedErr)
@@ -300,7 +292,7 @@ describe("errorMessage value is an object", () => {
   })
 
   describe("properties and items", () => {
-    let schema, validate
+    let schema: SchemaObject, validate: ValidateFunction
 
     describe("properties only", () => {
       beforeEach(() => {
@@ -347,16 +339,14 @@ describe("errorMessage value is an object", () => {
           },
         }
 
-        testProperties(tmpl)
-
-        function tmpl(str, data) {
-          return str
-            .replace("${/foo/baz}", JSON.stringify(data.foo && data.foo.baz))
+        testProperties((str, data) =>
+          str
+            .replace("${/foo/baz}", JSON.stringify(data.foo?.baz))
             .replace("${/bar}", JSON.stringify(data.bar))
-        }
+        )
       })
 
-      function testProperties(tmpl) {
+      function testProperties(tmpl?: (s: string, data: any) => string): void {
         const validData = {
           foo: {baz: 1},
           bar: ["abc"],
@@ -421,16 +411,14 @@ describe("errorMessage value is an object", () => {
           ],
         }
 
-        testItems(tmpl)
-
-        function tmpl(str, data) {
-          return str
-            .replace("${/0/baz}", JSON.stringify(data[0] && data[0].baz))
+        testItems((str, data) =>
+          str
+            .replace("${/0/baz}", JSON.stringify(data[0]?.baz))
             .replace("${/1}", JSON.stringify(data[1]))
-        }
+        )
       })
 
-      function testItems(tmpl) {
+      function testItems(tmpl?: (s: string, data: any) => string): void {
         const validData = [{baz: 1}, ["abc"]]
 
         ajvs.forEach((ajv) => {
@@ -516,18 +504,16 @@ describe("errorMessage value is an object", () => {
           ],
         }
 
-        testPropsAndItems(tmpl)
-
-        function tmpl(str, data) {
-          return str
-            .replace("${/foo/baz}", JSON.stringify(data.foo && data.foo.baz))
+        testPropsAndItems((str, data) =>
+          str
+            .replace("${/foo/baz}", JSON.stringify(data.foo?.baz))
             .replace("${/bar}", JSON.stringify(data.bar))
-            .replace("${/0/baz}", JSON.stringify(data[0] && data[0].baz))
+            .replace("${/0/baz}", JSON.stringify(data[0]?.baz))
             .replace("${/1}", JSON.stringify(data[1]))
-        }
+        )
       })
 
-      function testPropsAndItems(tmpl) {
+      function testPropsAndItems(tmpl?: (s: string, data: any) => string): void {
         const validData1 = {
           foo: {baz: 1},
           bar: ["abc"],
@@ -565,9 +551,13 @@ describe("errorMessage value is an object", () => {
       }
     })
 
-    function testInvalid(data, expectedErrors, interpolate) {
+    function testInvalid(
+      data: any,
+      expectedErrors: (string | string[])[],
+      interpolate?: (s: string, x: any) => string
+    ): void {
       assert.strictEqual(validate(data), false)
-      assert.strictEqual(validate.errors.length, expectedErrors.length)
+      assert.strictEqual(validate.errors?.length, expectedErrors.length)
       validate.errors.forEach((err, i) => {
         const expectedErr = expectedErrors[i]
         if (Array.isArray(expectedErr)) {
@@ -579,10 +569,8 @@ describe("errorMessage value is an object", () => {
           assert.strictEqual(err.message, expectedMessage)
           assert((Array.isArray(data) ? /^\/(0|1)$/ : /^\/(foo|bar)$/).test(err.dataPath))
           assert.strictEqual(err.schemaPath, "#/errorMessage")
-          const replacedKeywords = err.params.errors.map((e) => {
-            return e.keyword
-          })
-          assert.deepEqual(replacedKeywords.sort(), expectedErr.sort())
+          const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
+          assert.deepStrictEqual(replacedKeywords.sort(), expectedErr.sort())
         } else {
           // original error
           assert.strictEqual(err.keyword, expectedErr)
@@ -618,23 +606,21 @@ describe("errorMessage value is an object", () => {
         testInvalid({foo: "a"}, [["required"], ["type"]])
         testInvalid(null, [["type"]])
 
-        function testInvalid(data, expectedErrors) {
+        function testInvalid(data: any, expectedErrors: (string | string[])[]): void {
           assert.strictEqual(validate(data), false)
-          assert.strictEqual(validate.errors.length, expectedErrors.length)
+          assert.strictEqual(validate.errors?.length, expectedErrors.length)
           validate.errors.forEach((err, i) => {
             const expectedErr = expectedErrors[i]
             if (Array.isArray(expectedErr)) {
               // errorMessage error
-              assert.equal(err.keyword, "errorMessage")
-              assert.equal(err.schemaPath, "#/errorMessage")
+              assert.strictEqual(err.keyword, "errorMessage")
+              assert.strictEqual(err.schemaPath, "#/errorMessage")
               const expectedMessage = err.dataPath
                 ? schema.errorMessage.properties.foo
                 : schema.errorMessage[expectedErr[0] === "required" ? "required" : "_"]
-              assert.equal(err.message, expectedMessage)
-              const replacedKeywords = err.params.errors.map((e) => {
-                return e.keyword
-              })
-              assert.deepEqual(replacedKeywords.sort(), expectedErr.sort())
+              assert.strictEqual(err.message, expectedMessage)
+              const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
+              assert.deepStrictEqual(replacedKeywords.sort(), expectedErr.sort())
             } else {
               // original error
               assert.strictEqual(err.keyword, expectedErr)

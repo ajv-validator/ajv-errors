@@ -34,7 +34,7 @@ const KEYWORD_PROPERTY_PARAMS = {
 
 export interface ErrorMessageOptions {
   keepErrors?: boolean
-  singleError?: boolean
+  singleError?: boolean | string
 }
 
 const INTERPOLATION = /\$\{[^}]+\}/

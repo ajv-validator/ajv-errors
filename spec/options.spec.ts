@@ -1,20 +1,16 @@
-"use strict"
-
-const ajvErrors = require("..")
-const Ajv = require("ajv").default
-const assert = require("assert")
+import ajvErrors from ".."
+import Ajv, {ErrorObject, SchemaObject, ValidateFunction} from "ajv"
+import assert = require("assert")
 
 describe("options", () => {
-  let ajv
+  let ajv: Ajv
 
   beforeEach(() => {
     ajv = new Ajv({allErrors: true})
   })
 
   describe("keepErrors = true", () => {
-    beforeEach(() => {
-      ajvErrors(ajv, {keepErrors: true})
-    })
+    beforeEach(() => ajvErrors(ajv, {keepErrors: true}))
 
     describe("errorMessage is a string", () => {
       it("should keep matched errors and mark them with {emUsed: true} property", () => {
@@ -199,8 +195,8 @@ describe("options", () => {
       })
     })
 
-    function testSingleErrors(separator) {
-      const schema = {
+    function testSingleErrors(separator: string): void {
+      const schema: SchemaObject = {
         type: "number",
         minimum: 2,
         maximum: 10,
@@ -219,9 +215,7 @@ describe("options", () => {
 
       const expectedKeywords = ["maximum", "multipleOf"]
       const expectedMessage = expectedKeywords
-        .map((keyword) => {
-          return schema.errorMessage[keyword]
-        })
+        .map((keyword) => schema.errorMessage?.[keyword] as string)
         .join(separator)
 
       assertErrors(validate, [
@@ -235,19 +229,23 @@ describe("options", () => {
     }
   })
 
-  function assertErrors(validate, expectedErrors) {
-    assert.strictEqual(validate.errors.length, expectedErrors.length)
+  function assertErrors(
+    validate: ValidateFunction,
+    expectedErrors: Partial<ErrorObject & {emUsed: boolean; errors: string[]}>[]
+  ): void {
+    const {errors} = validate
+    assert.strictEqual(errors?.length, expectedErrors.length)
 
     expectedErrors.forEach((expectedErr, i) => {
-      const err = validate.errors[i]
+      const err = errors[i] as ErrorObject & {emUsed: boolean}
       assert.strictEqual(err.keyword, expectedErr.keyword)
       assert.strictEqual(err.dataPath, expectedErr.dataPath)
       assert.strictEqual(err.emUsed, expectedErr.emUsed)
       if (expectedErr.keyword === "errorMessage") {
-        assert.strictEqual(err.params.errors.length, expectedErr.errors.length)
-        expectedErr.errors.forEach((matchedKeyword, j) => {
+        assert.strictEqual(err.params.errors.length, expectedErr.errors?.length)
+        expectedErr.errors?.forEach((matchedKeyword: string, j: number) =>
           assert.strictEqual(err.params.errors[j].keyword, matchedKeyword)
-        })
+        )
       }
     })
   }

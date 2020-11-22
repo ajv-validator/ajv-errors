@@ -1,8 +1,6 @@
-"use strict"
-
-const ajvErrors = require("..")
-const Ajv = require("ajv").default
-const assert = require("assert")
+import ajvErrors from ".."
+import Ajv, {ErrorObject} from "ajv"
+import assert = require("assert")
 
 describe("errorMessage value is a string", () => {
   it("should replace all errors with custom error message", () => {
@@ -31,18 +29,18 @@ describe("errorMessage value is a string", () => {
       testInvalid({foo: "a", bar: 2}, ["type", "additionalProperties"])
       testInvalid(1, ["type"])
 
-      function testInvalid(data, expectedReplacedKeywords) {
+      function testInvalid(data: any, expectedReplacedKeywords: string[]): void {
         assert.strictEqual(validate(data), false)
-        assert.strictEqual(validate.errors.length, 1)
+        assert.strictEqual(validate.errors?.length, 1)
         const err = validate.errors[0]
         assert.strictEqual(err.keyword, "errorMessage")
         assert.strictEqual(err.message, schema.errorMessage)
         assert.strictEqual(err.dataPath, "")
         assert.strictEqual(err.schemaPath, "#/errorMessage")
-        const replacedKeywords = err.params.errors.map((e) => {
+        const replacedKeywords = err.params.errors.map((e: ErrorObject) => {
           return e.keyword
         })
-        assert.deepEqual(replacedKeywords.sort(), expectedReplacedKeywords.sort())
+        assert.deepStrictEqual(replacedKeywords.sort(), expectedReplacedKeywords.sort())
       }
     })
   })
@@ -78,9 +76,9 @@ describe("errorMessage value is a string", () => {
         testInvalid({foo: "a", bar: "b"}, ["type", "type"])
         testInvalid({foo: false, bar: true}, ["type", "type"])
 
-        function testInvalid(data, expectedReplacedKeywords) {
+        function testInvalid(data: any, expectedReplacedKeywords: string[]): void {
           assert.strictEqual(validate(data), false)
-          assert.strictEqual(validate.errors.length, 1)
+          assert.strictEqual(validate.errors?.length, 1)
           const err = validate.errors[0]
           assert.strictEqual(err.keyword, "errorMessage")
           const expectedMessage = schema.errorMessage
@@ -89,10 +87,8 @@ describe("errorMessage value is a string", () => {
           assert.strictEqual(err.message, expectedMessage)
           assert.strictEqual(err.dataPath, "")
           assert.strictEqual(err.schemaPath, "#/errorMessage")
-          const replacedKeywords = err.params.errors.map((e) => {
-            return e.keyword
-          })
-          assert.deepEqual(replacedKeywords.sort(), expectedReplacedKeywords.sort())
+          const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
+          assert.deepStrictEqual(replacedKeywords.sort(), expectedReplacedKeywords.sort())
         }
       })
     })
