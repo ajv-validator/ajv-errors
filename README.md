@@ -1,11 +1,11 @@
 # ajv-errors
+
 Custom error messages in JSON-Schema for Ajv validator
 
 [![Build Status](https://travis-ci.org/epoberezkin/ajv-errors.svg?branch=master)](https://travis-ci.org/epoberezkin/ajv-errors)
 [![npm version](https://badge.fury.io/js/ajv-errors.svg)](http://badge.fury.io/js/ajv-errors)
 [![Coverage Status](https://coveralls.io/repos/github/epoberezkin/ajv-errors/badge.svg?branch=master)](https://coveralls.io/github/epoberezkin/ajv-errors?branch=master)
 [![Gitter](https://img.shields.io/gitter/room/ajv-validator/ajv.svg)](https://gitter.im/ajv-validator/ajv)
-
 
 ## Contents
 
@@ -20,246 +20,234 @@ Custom error messages in JSON-Schema for Ajv validator
 - [Supporters, Enterprise support, Security contact](#supporters)
 - [License](#license)
 
-
 ## Install
 
 ```
 npm install ajv-errors
 ```
 
-
 ## Usage
 
 Add the keyword `errorMessages` to Ajv instance:
 
 ```javascript
-var Ajv = require('ajv');
-var ajv = new Ajv({allErrors: true, jsonPointers: true});
-// Ajv options allErrors and jsonPointers are required
-require('ajv-errors')(ajv /*, {singleError: true} */);
+const Ajv = require("ajv").default
+const ajv = new Ajv({allErrors: true})
+// Ajv option allErrors is required
+require("ajv-errors")(ajv /*, {singleError: true} */)
 ```
 
 See [Options](#options) below.
-
 
 ### Single message
 
 Replace all errors in the current schema and subschemas with a single message:
 
 ```javascript
-var schema = {
-  type: 'object',
-  required: ['foo'],
+const schema = {
+  type: "object",
+  required: ["foo"],
   properties: {
-    foo: { type: 'integer' }
+    foo: {type: "integer"},
   },
   additionalProperties: false,
-  errorMessage: 'should be an object with an integer property foo only'
-};
+  errorMessage: "should be an object with an integer property foo only",
+}
 
-var validate = ajv.compile(schema);
-console.log(validate({foo: 'a', bar: 2})); // false
-console.log(validate.errors); // processed errors
+const validate = ajv.compile(schema)
+console.log(validate({foo: "a", bar: 2})) // false
+console.log(validate.errors) // processed errors
 ```
 
 Processed errors:
 
 ```javascript
-[
+;[
   {
-    keyword: 'errorMessage',
-    message: 'should be an object with an integer property foo only',
+    keyword: "errorMessage",
+    message: "should be an object with an integer property foo only",
     // ...
     params: {
       errors: [
-        { keyword: 'additionalProperties', dataPath: '' /* , ... */ },
-        { keyword: 'type', dataPath: '.foo' /* , ... */ }
-      ]
-    }
-  }
+        {keyword: "additionalProperties", dataPath: "" /* , ... */},
+        {keyword: "type", dataPath: ".foo" /* , ... */},
+      ],
+    },
+  },
 ]
 ```
-
 
 ### Messages for keywords
 
 Replace errors for certain keywords in the current schema only:
 
 ```javascript
-var schema = {
-  type: 'object',
-  required: ['foo'],
+const schema = {
+  type: "object",
+  required: ["foo"],
   properties: {
-    foo: { type: 'integer' }
+    foo: {type: "integer"},
   },
   additionalProperties: false,
   errorMessage: {
-    type: 'should be an object', // will not replace internal "type" error for the property "foo"
-    required: 'should have property foo',
-    additionalProperties: 'should not have properties other than foo'
-  }
-};
+    type: "should be an object", // will not replace internal "type" error for the property "foo"
+    required: "should have property foo",
+    additionalProperties: "should not have properties other than foo",
+  },
+}
 
-var validate = ajv.compile(schema);
-console.log(validate({foo: 'a', bar: 2})); // false
-console.log(validate.errors); // processed errors
+const validate = ajv.compile(schema)
+console.log(validate({foo: "a", bar: 2})) // false
+console.log(validate.errors) // processed errors
 ```
 
 Processed errors:
 
 ```javascript
-[
+;[
   {
     // original error
     keyword: type,
-    dataPath: '/foo',
+    dataPath: "/foo",
     // ...
-    message: 'should be integer'
+    message: "should be integer",
   },
   {
     // generated error
-    keyword: 'errorMessage',
-    message: 'should not have properties other than foo',
+    keyword: "errorMessage",
+    message: "should not have properties other than foo",
     // ...
     params: {
-      errors: [
-        { keyword: 'additionalProperties' /* , ... */ }
-      ]
+      errors: [{keyword: "additionalProperties" /* , ... */}],
     },
-  }
+  },
 ]
 ```
 
 For keywords "required" and "dependencies" it is possible to specify different messages for different properties:
 
 ```javascript
-var schema = {
-  type: 'object',
-  required: ['foo', 'bar'],
+const schema = {
+  type: "object",
+  required: ["foo", "bar"],
   properties: {
-    foo: { type: 'integer' },
-    bar: { type: 'string' }
+    foo: {type: "integer"},
+    bar: {type: "string"},
   },
   errorMessage: {
-    type: 'should be an object', // will not replace internal "type" error for the property "foo"
+    type: "should be an object", // will not replace internal "type" error for the property "foo"
     required: {
       foo: 'should have an integer property "foo"',
-      bar: 'should have a string property "bar"'
-    }
-  }
-};
+      bar: 'should have a string property "bar"',
+    },
+  },
+}
 ```
-
 
 ### Messages for properties and items
 
 Replace errors for properties / items (and deeper), regardless where in schema they were created:
 
 ```javascript
-var schema = {
-  type: 'object',
-  required: ['foo', 'bar'],
-  allOf: [{
-    properties: {
-      foo: { type: 'integer', minimum: 2 },
-      bar: { type: 'string', minLength: 2 }
+const schema = {
+  type: "object",
+  required: ["foo", "bar"],
+  allOf: [
+    {
+      properties: {
+        foo: {type: "integer", minimum: 2},
+        bar: {type: "string", minLength: 2},
+      },
+      additionalProperties: false,
     },
-    additionalProperties: false
-  }],
+  ],
   errorMessage: {
     properties: {
-      foo: 'data.foo should be integer >= 2',
-      bar: 'data.bar should be string with length >= 2'
-    }
-  }
-};
+      foo: "data.foo should be integer >= 2",
+      bar: "data.bar should be string with length >= 2",
+    },
+  },
+}
 
-var validate = ajv.compile(schema);
-console.log(validate({foo: 1, bar: 'a'})); // false
-console.log(validate.errors); // processed errors
+const validate = ajv.compile(schema)
+console.log(validate({foo: 1, bar: "a"})) // false
+console.log(validate.errors) // processed errors
 ```
 
 Processed errors:
 
 ```javascript
-[
+;[
   {
-    keyword: 'errorMessage',
-    message: 'data.foo should be integer >= 2',
-    dataPath: '/foo',
+    keyword: "errorMessage",
+    message: "data.foo should be integer >= 2",
+    dataPath: "/foo",
     // ...
     params: {
-      errors: [
-        { keyword: 'minimum' /* , ... */ }
-      ]
+      errors: [{keyword: "minimum" /* , ... */}],
     },
   },
   {
-    keyword: 'errorMessage',
-    message: 'data.bar should be string with length >= 2',
-    dataPath: '/bar',
+    keyword: "errorMessage",
+    message: "data.bar should be string with length >= 2",
+    dataPath: "/bar",
     // ...
     params: {
-      errors: [
-        { keyword: 'minLength' /* , ... */ }
-      ]
+      errors: [{keyword: "minLength" /* , ... */}],
     },
-  }
+  },
 ]
 ```
 
-
 ### Default message
 
-When the value of keyword `errorMessage` is an object you can specify a message that will be used if any error appears that is not specified by keywords/properties/items:
+When the value of keyword `errorMessage` is an object you can specify a message that will be used if any error appears that is not specified by keywords/properties/items using `_` property:
 
 ```javascript
-var schema = {
-  type: 'object',
-  required: ['foo', 'bar'],
-  allOf: [{
-    properties: {
-      foo: { type: 'integer', minimum: 2 },
-      bar: { type: 'string', minLength: 2 }
+const schema = {
+  type: "object",
+  required: ["foo", "bar"],
+  allOf: [
+    {
+      properties: {
+        foo: {type: "integer", minimum: 2},
+        bar: {type: "string", minLength: 2},
+      },
+      additionalProperties: false,
     },
-    additionalProperties: false
-  }],
+  ],
   errorMessage: {
-    type: 'data should be an object',
+    type: "data should be an object",
     properties: {
-      foo: 'data.foo should be integer >= 2',
-      bar: 'data.bar should be string with length >= 2'
+      foo: "data.foo should be integer >= 2",
+      bar: "data.bar should be string with length >= 2",
     },
-    _: 'data should have properties "foo" and "bar" only'
-  }
-};
+    _: 'data should have properties "foo" and "bar" only',
+  },
+}
 
-var validate = ajv.compile(schema);
-console.log(validate({})); // false
-console.log(validate.errors); // processed errors
+const validate = ajv.compile(schema)
+console.log(validate({})) // false
+console.log(validate.errors) // processed errors
 ```
 
 Processed errors:
 
 ```javascript
-[
+;[
   {
-    keyword: 'errorMessage',
+    keyword: "errorMessage",
     message: 'data should be an object with properties "foo" and "bar" only',
-    dataPath: '',
+    dataPath: "",
     // ...
     params: {
-      errors: [
-        { keyword: 'required' /* , ... */ },
-        { keyword: 'required' /* , ... */ }
-      ]
+      errors: [{keyword: "required" /* , ... */}, {keyword: "required" /* , ... */}],
     },
-  }
+  },
 ]
 ```
 
 The message in property `_` of `errorMessage` replaces the same errors that would have been replaced if `errorMessage` were a string.
-
 
 ## Templates
 
@@ -268,28 +256,28 @@ Custom error messages used in `errorMessage` keyword can be templates using [JSO
 The syntax to interpolate a value is `${<pointer>}`.
 
 The values used in messages will be JSON-stringified:
+
 - to differentiate between `false` and `"false"`, etc.
 - to support structured values.
 
 Example:
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "size": {
-      "type": "number",
-      "minimum": 4
-    }
+```javascript
+const schema = {
+  type: "object",
+  properties: {
+    size: {
+      type: "number",
+      minimum: 4,
+    },
   },
-  "errorMessage": {
-    "properties": {
-      "size": "size should be a number bigger or equal to 4, current value is ${/size}"
-    }
-  }
+  errorMessage: {
+    properties: {
+      size: "size should be a number bigger or equal to 4, current value is ${/size}",
+    },
+  },
 }
 ```
-
 
 ## Options
 
@@ -308,23 +296,19 @@ Defaults:
   - `true`: create single error, messages are concatenated using `"; "`
   - non-empty string: this string is used as a separator to concatenate messages
 
-
 ## Supporters
 
-[<img src="https://media.licdn.com/dms/image/C4D03AQFDWZfViRzMQg/profile-displayphoto-shrink_800_800/0?e=1580342400&v=beta&t=BPNdzvccvgv44NxW3S-4cb2wmT3WYCKB7KBY1hM-n9s" width="48" height="48">](https://www.linkedin.com/in/rogerkepler/) [Roger Kepler](https://www.linkedin.com/in/rogerkepler/)
-
+[Roger Kepler](https://www.linkedin.com/in/rogerkepler/)
 
 ## Enterprise support
 
 ajv-errors package is a part of [Tidelift enterprise subscription](https://tidelift.com/subscription/pkg/npm-ajv-errors?utm_source=npm-ajv-errors&utm_medium=referral&utm_campaign=enterprise&utm_term=repo) - it provides a centralised commercial support to open-source software users, in addition to the support provided by software maintainers.
-
 
 ## Security contact
 
 To report a security vulnerability, please use the
 [Tidelift security contact](https://tidelift.com/security).
 Tidelift will coordinate the fix and disclosure. Please do NOT report security vulnerability via GitHub issues.
-
 
 ## License
 
