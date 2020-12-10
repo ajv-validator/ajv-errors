@@ -76,8 +76,8 @@ console.log(validate.errors) // processed errors
 
 Processed errors:
 
-```javascript
-;[
+```json5
+[
   {
     keyword: "errorMessage",
     message: "should be an object with an integer property foo only",
@@ -118,8 +118,8 @@ console.log(validate.errors) // processed errors
 
 Processed errors:
 
-```javascript
-;[
+```json5
+[
   {
     // original error
     keyword: type,
@@ -191,8 +191,8 @@ console.log(validate.errors) // processed errors
 
 Processed errors:
 
-```javascript
-;[
+```json5
+[
   {
     keyword: "errorMessage",
     message: "data.foo should be integer >= 2",
@@ -248,8 +248,8 @@ console.log(validate.errors) // processed errors
 
 Processed errors:
 
-```javascript
-;[
+```json5
+[
   {
     keyword: "errorMessage",
     message: 'data should be an object with properties "foo" and "bar" only',
@@ -298,10 +298,10 @@ const schema = {
 
 Defaults:
 
-```javascript
+```json5
 {
   keepErrors: false,
-  singleError: false
+  singleError: false,
 }
 ```
 
