@@ -2,15 +2,14 @@
 
 Custom error messages in JSON-Schema for Ajv validator
 
-[![Build Status](https://travis-ci.org/ajv-validator/ajv-errors.svg?branch=master)](https://travis-ci.org/ajv-validator/ajv-errors)
+[![build](https://github.com/ajv-validator/ajv-errors/workflows/build/badge.svg)](https://github.com/ajv-validator/ajv-errors/actions?query=workflow%3Abuild)
 [![npm](https://img.shields.io/npm/v/ajv-errors.svg)](https://www.npmjs.com/package/ajv-errors)
-[![npm (beta)](https://img.shields.io/npm/v/ajv-errors/beta)](https://www.npmjs.com/package/ajv-errors/v/2.0.0-beta.0)
-[![Coverage Status](https://coveralls.io/repos/github/ajv-validator/ajv-errors/badge.svg?branch=master)](https://coveralls.io/github/ajv-validator/ajv-errors?branch=master)
-[![Gitter](https://img.shields.io/gitter/room/ajv-validator/ajv.svg)](https://gitter.im/ajv-validator/ajv)
+[![coverage](https://coveralls.io/repos/github/ajv-validator/ajv-errors/badge.svg?branch=master)](https://coveralls.io/github/ajv-validator/ajv-errors?branch=master)
+[![gitter](https://img.shields.io/gitter/room/ajv-validator/ajv.svg)](https://gitter.im/ajv-validator/ajv)
 
 **Please note**
 
-ajv-errors v2-beta supports [ajv v7-beta](https://github.com/ajv-validator/ajv).
+ajv-errors v2 supports [ajv v7](https://github.com/ajv-validator/ajv).
 
 If you are using ajv v6, you should use [ajv-errors v1](https://github.com/ajv-validator/ajv-errors/tree/v1)
 
@@ -28,14 +27,6 @@ If you are using ajv v6, you should use [ajv-errors v1](https://github.com/ajv-v
 - [License](#license)
 
 ## Install
-
-v2-beta:
-
-```
-npm install ajv-errors@beta
-```
-
-v1:
 
 ```
 npm install ajv-errors
