@@ -30,6 +30,7 @@ const used: Name = new Name("emUsed")
 const KEYWORD_PROPERTY_PARAMS = {
   required: "missingProperty",
   dependencies: "property",
+  dependentRequired: "property",
 }
 
 export interface ErrorMessageOptions {
