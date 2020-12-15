@@ -296,9 +296,9 @@ const schema = {
 
 #### Referring to Field Names
 
-Field names can be referred to by using the relative `0#` JSON-pointer. 
+Field names can be referred to by using the relative `0#` JSON-pointer.
 
-Example which prints additional properties that cause validation error: 
+Example which prints additional properties that cause validation error:
 
 ```javascript
 const schema = {
@@ -314,8 +314,6 @@ const schema = {
   }
 }
 ```
-
-
 
 ## Options
 
