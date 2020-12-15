@@ -15,7 +15,7 @@
     "prettier:check": "prettier --list-different \"./**/*.{md,json,ts,js}\"",
     "test-spec": "jest \"spec/*.ts\"",
     "test-cov": "jest \"spec/*.ts\" --coverage",
-    "test": "npm run eslint && npm run build && npm run test-cov",
+    "test": "npm run prettier:check && npm run eslint && npm run build && npm run test-cov",
     "prepublish": "npm run build"
   },
   "repository": {
