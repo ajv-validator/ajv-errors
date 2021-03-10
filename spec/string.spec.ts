@@ -1,13 +1,15 @@
 import ajvErrors from ".."
 import Ajv, {ErrorObject} from "ajv"
+import AjvPack from "ajv/dist/standalone/instance"
 import assert = require("assert")
+
+function _ajv(verbose?: boolean): Ajv {
+  return ajvErrors(new Ajv({allErrors: true, verbose, code: {source: true}}))
+}
 
 describe("errorMessage value is a string", () => {
   it("should replace all errors with custom error message", () => {
-    const ajvs = [
-      ajvErrors(new Ajv({allErrors: true})),
-      ajvErrors(new Ajv({allErrors: true, verbose: true})),
-    ]
+    const ajvs = [_ajv(), _ajv(true), new AjvPack(_ajv()), new AjvPack(_ajv(true))]
 
     const schema = {
       type: "object",
@@ -40,7 +42,10 @@ describe("errorMessage value is a string", () => {
         const replacedKeywords = err.params.errors.map((e: ErrorObject) => {
           return e.keyword
         })
-        assert.deepStrictEqual(replacedKeywords.sort(), expectedReplacedKeywords.sort())
+        assert.deepStrictEqual(
+          Array.from(replacedKeywords.sort()),
+          Array.from(expectedReplacedKeywords.sort())
+        )
       }
     })
   })

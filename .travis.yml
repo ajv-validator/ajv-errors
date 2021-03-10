@@ -1,9 +1,0 @@
-language: node_js
-node_js:
-  - "10"
-  - "12"
-  - "14"
-before_script:
-  - npm install -g coveralls
-after_script:
-  - coveralls < coverage/lcov.info

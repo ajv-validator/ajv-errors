@@ -1,15 +1,17 @@
 import ajvErrors from ".."
 import Ajv, {SchemaObject, ErrorObject, ValidateFunction} from "ajv"
+import AjvPack from "ajv/dist/standalone/instance"
 import assert = require("assert")
 
+function _ajv(verbose?: boolean): Ajv {
+  return ajvErrors(new Ajv({allErrors: true, verbose, code: {source: true}}))
+}
+
 describe("errorMessage value is an object", () => {
-  let ajvs: Ajv[]
+  let ajvs: (Ajv | AjvPack)[]
 
   beforeEach(() => {
-    ajvs = [
-      ajvErrors(new Ajv({allErrors: true})),
-      ajvErrors(new Ajv({allErrors: true, verbose: true})),
-    ]
+    ajvs = [_ajv(), _ajv(true), new AjvPack(_ajv()), new AjvPack(_ajv(true))]
   })
 
   describe("keywords", () => {
@@ -50,7 +52,10 @@ describe("errorMessage value is an object", () => {
               assert.strictEqual(err.dataPath, "")
               assert.strictEqual(err.schemaPath, "#/errorMessage")
               const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
-              assert.deepStrictEqual(replacedKeywords.sort(), expectedErr.sort())
+              assert.deepStrictEqual(
+                Array.from(replacedKeywords.sort()),
+                Array.from(expectedErr.sort())
+              )
             } else {
               // original error
               assert.strictEqual(err.keyword, expectedErr)
@@ -134,7 +139,10 @@ describe("errorMessage value is an object", () => {
             assert.strictEqual(err.dataPath, "/foo")
             assert.strictEqual(err.schemaPath, "#/properties/foo/errorMessage")
             const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
-            assert.deepStrictEqual(replacedKeywords.sort(), expectedErr.sort())
+            assert.deepStrictEqual(
+              Array.from(replacedKeywords.sort()),
+              Array.from(expectedErr.sort())
+            )
           } else {
             // original error
             assert.strictEqual(err.keyword, expectedErr)
@@ -281,7 +289,10 @@ describe("errorMessage value is an object", () => {
             assert.strictEqual(err.dataPath, "")
             assert.strictEqual(err.schemaPath, "#/errorMessage")
             const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
-            assert.deepStrictEqual(replacedKeywords, Object.keys(expectedErr))
+            assert.deepStrictEqual(
+              Array.from(replacedKeywords),
+              Array.from(Object.keys(expectedErr))
+            )
           } else {
             // original error
             assert.strictEqual(err.keyword, expectedErr)
@@ -570,7 +581,10 @@ describe("errorMessage value is an object", () => {
           assert((Array.isArray(data) ? /^\/(0|1)$/ : /^\/(foo|bar)$/).test(err.dataPath))
           assert.strictEqual(err.schemaPath, "#/errorMessage")
           const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
-          assert.deepStrictEqual(replacedKeywords.sort(), expectedErr.sort())
+          assert.deepStrictEqual(
+            Array.from(replacedKeywords.sort()),
+            Array.from(expectedErr.sort())
+          )
         } else {
           // original error
           assert.strictEqual(err.keyword, expectedErr)
@@ -620,7 +634,10 @@ describe("errorMessage value is an object", () => {
                 : schema.errorMessage[expectedErr[0] === "required" ? "required" : "_"]
               assert.strictEqual(err.message, expectedMessage)
               const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
-              assert.deepStrictEqual(replacedKeywords.sort(), expectedErr.sort())
+              assert.deepStrictEqual(
+                Array.from(replacedKeywords.sort()),
+                Array.from(expectedErr.sort())
+              )
             } else {
               // original error
               assert.strictEqual(err.keyword, expectedErr)
