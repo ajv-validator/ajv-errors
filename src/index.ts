@@ -292,7 +292,10 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
             _`${err}.dataPath.indexOf(${dataPath}) === 0`
           ),
           () => {
-            const childRegex = gen.scopeValue("pattern", {ref: /^\/([^/]*)(?:\/|$)/})
+            const childRegex = gen.scopeValue("pattern", {
+              ref: /^\/([^/]*)(?:\/|$)/,
+              code: _`new RegExp("^\\\/([^/]*)(?:\\\/|$)")`,
+            })
             const matches = gen.const(
               "emMatches",
               _`${childRegex}.exec(${err}.dataPath.slice(${dataPath}.length))`
