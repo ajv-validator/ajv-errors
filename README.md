@@ -285,12 +285,11 @@ const schema = {
 }
 ```
 
-#### Referring to Field Names
+#### Using property names in error messages
 
-Field names can be referred to by using the relative `0#` JSON-pointer.
+Property names can be used in error messages with the relative JSON-pointer (e.g. `0#`). 
 
-Example which prints additional properties that cause validation error:
-
+Example: 
 ```javascript
 const schema = {
   type: "object",
