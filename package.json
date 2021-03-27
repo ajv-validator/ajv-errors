@@ -1,7 +1,7 @@
 {
   "name": "ajv-errors",
-  "version": "2.0.1",
-  "description": "Custom error messages in JSON-Schema for Ajv validator",
+  "version": "3.0.0",
+  "description": "Custom error messages in JSON Schemas for Ajv validator",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
