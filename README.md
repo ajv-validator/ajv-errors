@@ -9,7 +9,7 @@ Custom error messages in JSON-Schema for Ajv validator
 
 **Please note**
 
-ajv-errors v2 supports [ajv v7](https://github.com/ajv-validator/ajv).
+ajv-errors v3 supports [ajv v8](https://github.com/ajv-validator/ajv).
 
 If you are using ajv v6, you should use [ajv-errors v1](https://github.com/ajv-validator/ajv-errors/tree/v1)
 
