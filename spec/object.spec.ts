@@ -49,7 +49,7 @@ describe("errorMessage value is an object", () => {
               // errorMessage error
               assert.strictEqual(err.keyword, "errorMessage")
               assert.strictEqual(err.message, schema.errorMessage[err.params.errors[0].keyword])
-              assert.strictEqual(err.dataPath, "")
+              assert.strictEqual(err.instancePath, "")
               assert.strictEqual(err.schemaPath, "#/errorMessage")
               const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
               assert.deepStrictEqual(
@@ -136,7 +136,7 @@ describe("errorMessage value is an object", () => {
               .replace("${0#}", '"foo"')
               .replace("${0}", JSON.stringify(data.foo))
             assert.strictEqual(err.message, expectedMessage)
-            assert.strictEqual(err.dataPath, "/foo")
+            assert.strictEqual(err.instancePath, "/foo")
             assert.strictEqual(err.schemaPath, "#/properties/foo/errorMessage")
             const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
             assert.deepStrictEqual(
@@ -286,7 +286,7 @@ describe("errorMessage value is an object", () => {
               .replace("${/foo}", JSON.stringify(data.foo))
               .replace("${/bar}", JSON.stringify(data.bar))
             assert.strictEqual(err.message, expectedMessage)
-            assert.strictEqual(err.dataPath, "")
+            assert.strictEqual(err.instancePath, "")
             assert.strictEqual(err.schemaPath, "#/errorMessage")
             const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
             assert.deepStrictEqual(
@@ -575,10 +575,10 @@ describe("errorMessage value is an object", () => {
           // errorMessage error
           assert.strictEqual(err.keyword, "errorMessage")
           const child = Array.isArray(data) ? "items" : "properties"
-          let expectedMessage = schema.errorMessage[child][err.dataPath.slice(1)]
+          let expectedMessage = schema.errorMessage[child][err.instancePath.slice(1)]
           if (interpolate) expectedMessage = interpolate(expectedMessage, data)
           assert.strictEqual(err.message, expectedMessage)
-          assert((Array.isArray(data) ? /^\/(0|1)$/ : /^\/(foo|bar)$/).test(err.dataPath))
+          assert((Array.isArray(data) ? /^\/(0|1)$/ : /^\/(foo|bar)$/).test(err.instancePath))
           assert.strictEqual(err.schemaPath, "#/errorMessage")
           const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
           assert.deepStrictEqual(
@@ -629,7 +629,7 @@ describe("errorMessage value is an object", () => {
               // errorMessage error
               assert.strictEqual(err.keyword, "errorMessage")
               assert.strictEqual(err.schemaPath, "#/errorMessage")
-              const expectedMessage = err.dataPath
+              const expectedMessage = err.instancePath
                 ? schema.errorMessage.properties.foo
                 : schema.errorMessage[expectedErr[0] === "required" ? "required" : "_"]
               assert.strictEqual(err.message, expectedMessage)

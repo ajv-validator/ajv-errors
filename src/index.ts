@@ -2,7 +2,7 @@ import type {Plugin, CodeKeywordDefinition, KeywordCxt, ErrorObject, Code} from 
 import Ajv, {_, str, stringify, Name} from "ajv"
 import {and, or, not, strConcat} from "ajv/dist/compile/codegen"
 import {safeStringify, _Code} from "ajv/dist/compile/codegen/code"
-import {getData} from "ajv/dist/compile/context"
+import {getData} from "ajv/dist/compile/validate"
 import {reportError} from "ajv/dist/compile/errors"
 import N from "ajv/dist/compile/names"
 
@@ -51,7 +51,7 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
       const {gen, data, schema, schemaValue, it} = cxt
       if (it.createErrors === false) return
       const sch: ErrorMessageSchema | string = schema
-      const dataPath = strConcat(N.dataPath, it.errorPath)
+      const instancePath = strConcat(N.instancePath, it.errorPath)
       gen.if(_`${N.errors} > 0`, () => {
         if (typeof sch == "object") {
           const [kwdPropErrors, kwdErrors] = keywordErrorsConfig(sch)
@@ -228,8 +228,8 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
               params: _`{errors: ${childErrs}[${key}]}`,
             })
             gen.assign(
-              _`${N.vErrors}[${N.errors}-1].dataPath`,
-              _`${dataPath} + "/" + ${key}.replace(/~/g, "~0").replace(/\\//g, "~1")`
+              _`${N.vErrors}[${N.errors}-1].instancePath`,
+              _`${instancePath} + "/" + ${key}.replace(/~/g, "~0").replace(/\\//g, "~1")`
             )
           })
         )
@@ -272,7 +272,7 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
         return and(
           _`${err}.keyword !== ${keyword}`,
           _`!${err}.${used}`,
-          _`${err}.dataPath === ${dataPath}`,
+          _`${err}.instancePath === ${instancePath}`,
           _`${err}.keyword in ${kwdErrs}`,
           // TODO match the end of the string?
           _`${err}.schemaPath.indexOf(${it.errSchemaPath}) === 0`,
@@ -289,7 +289,7 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
           and(
             _`${err}.keyword !== ${keyword}`,
             _`!${err}.${used}`,
-            _`${err}.dataPath.indexOf(${dataPath}) === 0`
+            _`${err}.instancePath.indexOf(${instancePath}) === 0`
           ),
           () => {
             const childRegex = gen.scopeValue("pattern", {
@@ -298,7 +298,7 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
             })
             const matches = gen.const(
               "emMatches",
-              _`${childRegex}.exec(${err}.dataPath.slice(${dataPath}.length))`
+              _`${childRegex}.exec(${err}.instancePath.slice(${instancePath}.length))`
             )
             const child = gen.const(
               "emChild",
@@ -314,10 +314,10 @@ function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
           _`${err}.keyword !== ${keyword}`,
           _`!${err}.${used}`,
           or(
-            _`${err}.dataPath === ${dataPath}`,
+            _`${err}.instancePath === ${instancePath}`,
             and(
-              _`${err}.dataPath.indexOf(${dataPath}) === 0`,
-              _`${err}.dataPath[${dataPath}.length] === "/"`
+              _`${err}.instancePath.indexOf(${instancePath}) === 0`,
+              _`${err}.instancePath[${instancePath}.length] === "/"`
             )
           ),
           _`${err}.schemaPath.indexOf(${it.errSchemaPath}) === 0`,

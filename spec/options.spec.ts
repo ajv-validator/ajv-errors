@@ -40,17 +40,17 @@ describe("options", () => {
         assertErrors(validate, [
           {
             keyword: "required",
-            dataPath: "",
+            instancePath: "",
           },
           {
             keyword: "type",
-            dataPath: "/foo",
+            instancePath: "/foo",
             emUsed: true,
           },
           {
             keyword: "errorMessage",
             message: "should be an object with an integer property baz",
-            dataPath: "/foo",
+            instancePath: "/foo",
             errors: ["type"],
           },
         ])
@@ -78,17 +78,17 @@ describe("options", () => {
         assertErrors(validate, [
           {
             keyword: "maximum",
-            dataPath: "",
+            instancePath: "",
             emUsed: true,
           },
           {
             keyword: "multipleOf",
-            dataPath: "",
+            instancePath: "",
           },
           {
             keyword: "errorMessage",
             message: "should be <= 10",
-            dataPath: "",
+            instancePath: "",
             errors: ["maximum"],
           },
         ])
@@ -116,24 +116,24 @@ describe("options", () => {
         assertErrors(validate, [
           {
             keyword: "required",
-            dataPath: "",
+            instancePath: "",
             emUsed: true,
           },
           {
             keyword: "required",
-            dataPath: "",
+            instancePath: "",
             emUsed: true,
           },
           {
             keyword: "errorMessage",
             message: "should have property foo",
-            dataPath: "",
+            instancePath: "",
             errors: ["required"],
           },
           {
             keyword: "errorMessage",
             message: "should have property bar",
-            dataPath: "",
+            instancePath: "",
             errors: ["required"],
           },
         ])
@@ -162,17 +162,17 @@ describe("options", () => {
         assertErrors(validate, [
           {
             keyword: "type",
-            dataPath: "/foo",
+            instancePath: "/foo",
             emUsed: true,
           },
           {
             keyword: "type",
-            dataPath: "/bar",
+            instancePath: "/bar",
           },
           {
             keyword: "errorMessage",
             message: "foo should be a number",
-            dataPath: "/foo",
+            instancePath: "/foo",
             errors: ["type"],
           },
         ])
@@ -222,7 +222,7 @@ describe("options", () => {
         {
           keyword: "errorMessage",
           message: expectedMessage,
-          dataPath: "",
+          instancePath: "",
           errors: expectedKeywords,
         },
       ])
@@ -239,7 +239,7 @@ describe("options", () => {
     expectedErrors.forEach((expectedErr, i) => {
       const err = errors[i] as ErrorObject & {emUsed: boolean}
       assert.strictEqual(err.keyword, expectedErr.keyword)
-      assert.strictEqual(err.dataPath, expectedErr.dataPath)
+      assert.strictEqual(err.instancePath, expectedErr.instancePath)
       assert.strictEqual(err.emUsed, expectedErr.emUsed)
       if (expectedErr.keyword === "errorMessage") {
         assert.strictEqual(err.params.errors.length, expectedErr.errors?.length)

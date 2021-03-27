@@ -7,7 +7,7 @@ function _ajv(verbose?: boolean): Ajv {
   return ajvErrors(new Ajv({allErrors: true, verbose, code: {source: true}}))
 }
 
-describe("errorMessage value is a string", () => {
+describe.only("errorMessage value is a string", () => {
   it("should replace all errors with custom error message", () => {
     const ajvs = [_ajv(), _ajv(true), new AjvPack(_ajv()), new AjvPack(_ajv(true))]
 
@@ -37,7 +37,7 @@ describe("errorMessage value is a string", () => {
         const err = validate.errors[0]
         assert.strictEqual(err.keyword, "errorMessage")
         assert.strictEqual(err.message, schema.errorMessage)
-        assert.strictEqual(err.dataPath, "")
+        assert.strictEqual(err.instancePath, "")
         assert.strictEqual(err.schemaPath, "#/errorMessage")
         const replacedKeywords = err.params.errors.map((e: ErrorObject) => {
           return e.keyword
@@ -90,7 +90,7 @@ describe("errorMessage value is a string", () => {
             .replace("${/foo}", JSON.stringify(data.foo))
             .replace("${/bar}", JSON.stringify(data.bar))
           assert.strictEqual(err.message, expectedMessage)
-          assert.strictEqual(err.dataPath, "")
+          assert.strictEqual(err.instancePath, "")
           assert.strictEqual(err.schemaPath, "#/errorMessage")
           const replacedKeywords = err.params.errors.map((e: ErrorObject) => e.keyword)
           assert.deepStrictEqual(replacedKeywords.sort(), expectedReplacedKeywords.sort())
