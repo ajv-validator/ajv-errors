@@ -23,8 +23,6 @@ interface ChildErrors {
   items?: ErrorsMap<number>
 }
 
-const keyword = "errorMessage"
-
 const used: Name = new Name("emUsed")
 
 const KEYWORD_PROPERTY_PARAMS = {
@@ -36,13 +34,18 @@ const KEYWORD_PROPERTY_PARAMS = {
 export interface ErrorMessageOptions {
   keepErrors?: boolean
   singleError?: boolean | string
+  keyword?: string  
 }
 
 const INTERPOLATION = /\$\{[^}]+\}/
 const INTERPOLATION_REPLACE = /\$\{([^}]+)\}/g
 const EMPTY_STR = /^""\s*\+\s*|\s*\+\s*""$/g
+let keyword = 'errorMessage'
 
 function errorMessage(options: ErrorMessageOptions): CodeKeywordDefinition {
+    if(options.keyword){
+	keyword = options.keyword;
+    }
   return {
     keyword,
     schemaType: ["string", "object"],

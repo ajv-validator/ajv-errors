@@ -2,10 +2,31 @@ import ajvErrors from ".."
 import Ajv, {ErrorObject, SchemaObject, ValidateFunction} from "ajv"
 import assert = require("assert")
 
-describe("options", () => {
-  let ajv: Ajv
+function assertErrors(
+    validate: ValidateFunction,
+    expectedErrors: Partial<ErrorObject & {emUsed: boolean; errors: string[]}>[]
+  ): void {
+    const {errors} = validate
+    assert.strictEqual(errors?.length, expectedErrors.length)
 
-  beforeEach(() => {
+    expectedErrors.forEach((expectedErr, i) => {
+      const err = errors[i] as ErrorObject & {emUsed: boolean}
+      assert.strictEqual(err.keyword, expectedErr.keyword)
+      assert.strictEqual(err.instancePath, expectedErr.instancePath)
+      assert.strictEqual(err.emUsed, expectedErr.emUsed)
+      if (expectedErr.keyword === "errorMessage") {
+        assert.strictEqual(err.params.errors.length, expectedErr.errors?.length)
+        expectedErr.errors?.forEach((matchedKeyword: string, j: number) =>
+          assert.strictEqual(err.params.errors[j].keyword, matchedKeyword)
+        )
+      }
+    })
+  }
+
+describe("options", () => {
+    let ajv: Ajv
+
+    beforeEach(() => {
     ajv = new Ajv({allErrors: true})
   })
 
@@ -180,6 +201,74 @@ describe("options", () => {
     })
   })
 
+  describe("keyword option", () => {
+      it("should set the keyword", () => {
+	  ajvErrors(ajv, {keyword: 'x-errorMessage'})
+	  testKeywordErrors()
+      })
+      function testKeywordErrors(): void {
+	  const errorMessageKeyword = "x-errorMessage"
+	  const schema: SchemaObject = {
+              type: "number",
+              minimum: 2,
+              maximum: 10,
+              multipleOf: 2,
+              [errorMessageKeyword]: {
+		  type: "should be number",
+		  minimum: "should be >= 2",
+		  maximum: "should be <= 10",
+		  multipleOf: "should be multipleOf 2",
+              },
+	  }
+	  const validate = ajv.compile(schema)
+	  assert.strictEqual(validate(11), false)
+	  
+	  assertErrors(validate, [
+	     {
+             "instancePath": "",
+             "schemaPath": "#/x-errorMessage",
+             "keyword": "x-errorMessage",
+             "params": {
+		 "errors": [
+		     {
+			 "instancePath": "",
+			 "schemaPath": "#/maximum",
+			 "keyword": "maximum",
+			 "params": {
+			     "comparison": "<=",
+			     "limit": 10
+			 },
+			 "message": "must be <= 10",
+			 "emUsed": true
+		     }
+		 ]
+             },
+             "message": "should be <= 10"
+	     },
+	     {
+		 "instancePath": "",
+		 "schemaPath": "#/x-errorMessage",
+		 "keyword": "x-errorMessage",
+		 "params": {
+		     "errors": [
+			 {
+			     "instancePath": "",
+			     "schemaPath": "#/multipleOf",
+			     "keyword": "multipleOf",
+			     "params": {
+				 "multipleOf": 2
+			     },
+			     "message": "must be multiple of 2",
+			     "emUsed": true
+			 }
+		     ]
+		 },
+		 "message": "should be multipleOf 2"
+	     }
+	  ])
+      }
+  })
+    
   describe("singleError", () => {
     describe("= true", () => {
       it("should generate a single error for all keywords", () => {
@@ -228,25 +317,4 @@ describe("options", () => {
       ])
     }
   })
-
-  function assertErrors(
-    validate: ValidateFunction,
-    expectedErrors: Partial<ErrorObject & {emUsed: boolean; errors: string[]}>[]
-  ): void {
-    const {errors} = validate
-    assert.strictEqual(errors?.length, expectedErrors.length)
-
-    expectedErrors.forEach((expectedErr, i) => {
-      const err = errors[i] as ErrorObject & {emUsed: boolean}
-      assert.strictEqual(err.keyword, expectedErr.keyword)
-      assert.strictEqual(err.instancePath, expectedErr.instancePath)
-      assert.strictEqual(err.emUsed, expectedErr.emUsed)
-      if (expectedErr.keyword === "errorMessage") {
-        assert.strictEqual(err.params.errors.length, expectedErr.errors?.length)
-        expectedErr.errors?.forEach((matchedKeyword: string, j: number) =>
-          assert.strictEqual(err.params.errors[j].keyword, matchedKeyword)
-        )
-      }
-    })
-  }
 })

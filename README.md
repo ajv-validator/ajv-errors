@@ -313,6 +313,7 @@ Defaults:
 {
   keepErrors: false,
   singleError: false,
+  keyword: 'errorMessage'
 }
 ```
 
@@ -321,6 +322,7 @@ Defaults:
   - `false` (default): create multiple errors, one for each message
   - `true`: create single error, messages are concatenated using `"; "`
   - non-empty string: this string is used as a separator to concatenate messages
+- _keyword_: Override the keyword for error messages, for example x-error-message for use with swagger extensions
 
 ## Supporters
 
